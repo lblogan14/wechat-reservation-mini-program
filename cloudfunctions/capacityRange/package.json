@@ -1,0 +1,9 @@
+{
+  "name": "capacityRange",
+  "version": "1.0.0",
+  "description": "Join services + availabilityOverrides + bookings to return per-day remaining capacity for a service in a date range.",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.0"
+  }
+}

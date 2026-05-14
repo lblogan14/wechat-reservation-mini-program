@@ -136,6 +136,27 @@ const zh = {
   availability_summary_delta_neg: '{n} 只',
   availability_summary_absolute: '当日上限 {n} 只',
   availability_no_services_hint: '请先创建至少一个房型。',
+
+  calendar_title: '可用日历',
+  calendar_service: '选择房型',
+  calendar_prev_month: '上一月',
+  calendar_next_month: '下一月',
+  calendar_full: '已约满',
+  calendar_remaining: '剩 {n}',
+  calendar_legend_full: '已约满',
+  calendar_legend_low: '紧张',
+  calendar_legend_open: '充足',
+  calendar_no_services: '主人尚未创建房型，暂无可约日历。',
+  calendar_loading: '加载中…',
+  calendar_dow_mon: '一',
+  calendar_dow_tue: '二',
+  calendar_dow_wed: '三',
+  calendar_dow_thu: '四',
+  calendar_dow_fri: '五',
+  calendar_dow_sat: '六',
+  calendar_dow_sun: '日',
+  calendar_month_label: '{y} 年 {m} 月',
+  calendar_tap_hint: '点击日期即将开放预约（预约流程即将上线）',
 };
 
 export default zh;

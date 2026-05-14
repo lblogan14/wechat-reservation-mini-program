@@ -138,6 +138,27 @@ const en: Dict = {
   availability_summary_delta_neg: '{n} slots',
   availability_summary_absolute: 'Cap at {n} slots',
   availability_no_services_hint: 'Create at least one room first.',
+
+  calendar_title: 'Availability calendar',
+  calendar_service: 'Room',
+  calendar_prev_month: 'Prev',
+  calendar_next_month: 'Next',
+  calendar_full: 'Full',
+  calendar_remaining: '{n} left',
+  calendar_legend_full: 'Full',
+  calendar_legend_low: 'Limited',
+  calendar_legend_open: 'Open',
+  calendar_no_services: 'The owner hasn’t set up rooms yet — calendar will appear here.',
+  calendar_loading: 'Loading…',
+  calendar_dow_mon: 'M',
+  calendar_dow_tue: 'T',
+  calendar_dow_wed: 'W',
+  calendar_dow_thu: 'T',
+  calendar_dow_fri: 'F',
+  calendar_dow_sat: 'S',
+  calendar_dow_sun: 'S',
+  calendar_month_label: '{m}/{y}',
+  calendar_tap_hint: 'Tap a date to start a booking (booking flow ships next)',
 };
 
 export default en;

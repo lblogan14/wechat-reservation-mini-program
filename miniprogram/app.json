@@ -8,7 +8,8 @@
     "pages/services/list/list",
     "pages/services/edit/edit",
     "pages/availability/list/list",
-    "pages/availability/edit/edit"
+    "pages/availability/edit/edit",
+    "pages/calendar/calendar"
   ],
   "window": {
     "backgroundTextStyle": "light",

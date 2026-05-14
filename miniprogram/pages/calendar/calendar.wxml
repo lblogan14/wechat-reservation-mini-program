@@ -1,0 +1,55 @@
+<view class="container">
+  <view class="header"><text class="title">{{titleText}}</text></view>
+
+  <block wx:if="{{!serviceOptions.length}}">
+    <view class="empty"><text class="muted">{{noServicesText}}</text></view>
+  </block>
+
+  <block wx:else>
+    <view class="card">
+      <view class="picker-row">
+        <text class="label">{{serviceLabel}}</text>
+        <picker class="picker" range="{{serviceOptions}}" range-key="label" value="{{serviceIndex}}" bindchange="onServiceChange">
+          <view class="picker-value">{{serviceOptions[serviceIndex].label}}</view>
+        </picker>
+      </view>
+
+      <view class="month-row">
+        <view class="month-btn" bindtap="onPrevMonth">‹ {{prevLabel}}</view>
+        <view class="month-label">{{monthLabel}}</view>
+        <view class="month-btn" bindtap="onNextMonth">{{nextLabel}} ›</view>
+      </view>
+
+      <view class="dow-row">
+        <view wx:for="{{dowLabels}}" wx:key="*this" class="dow">{{item}}</view>
+      </view>
+
+      <block wx:if="{{loading}}">
+        <view class="loading"><text class="muted">{{loadingText}}</text></view>
+      </block>
+      <block wx:else>
+        <view class="grid">
+          <view
+            wx:for="{{cells}}"
+            wx:key="key"
+            class="cell {{item.fillClass}} {{item.inMonth ? '' : 'out'}} {{item.isToday ? 'today' : ''}}"
+            data-key="{{item.key}}"
+            data-in-month="{{item.inMonth}}"
+            bindtap="onCellTap"
+          >
+            <text class="day">{{item.dayLabel}}</text>
+            <text wx:if="{{item.inMonth}}" class="remain">{{item.remainingLabel}}</text>
+          </view>
+        </view>
+      </block>
+
+      <view class="legend">
+        <view class="legend-item"><view class="dot open" /><text class="muted small">{{legendOpen}}</text></view>
+        <view class="legend-item"><view class="dot low" /><text class="muted small">{{legendLow}}</text></view>
+        <view class="legend-item"><view class="dot full" /><text class="muted small">{{legendFull}}</text></view>
+      </view>
+    </view>
+
+    <view class="hint"><text class="muted small">{{tapHint}}</text></view>
+  </block>
+</view>

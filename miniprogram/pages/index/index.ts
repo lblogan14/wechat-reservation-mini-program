@@ -75,7 +75,7 @@ Page({
   },
 
   onBookTap() {
-    wx.showToast({ title: this.data.todoBookingFlow, icon: 'none' });
+    wx.navigateTo({ url: '/pages/calendar/calendar' });
   },
 
   onMyBookingsTap() {
