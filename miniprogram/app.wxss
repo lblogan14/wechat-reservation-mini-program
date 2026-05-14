@@ -1,0 +1,11 @@
+page {
+  background-color: #f5f6f8;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 28rpx;
+  color: #1a1a1a;
+  line-height: 1.5;
+}
+
+.container {
+  padding: 32rpx;
+}

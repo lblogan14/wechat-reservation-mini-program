@@ -1,0 +1,12 @@
+<view class="row">
+  <view
+    class="opt {{locale === 'zh' ? 'active' : ''}}"
+    data-locale="zh"
+    bindtap="onSelect"
+  >中文</view>
+  <view
+    class="opt {{locale === 'en' ? 'active' : ''}}"
+    data-locale="en"
+    bindtap="onSelect"
+  >English</view>
+</view>

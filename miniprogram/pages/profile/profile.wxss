@@ -1,0 +1,44 @@
+.header {
+  margin-top: 48rpx;
+  margin-bottom: 48rpx;
+}
+
+.title {
+  display: block;
+  font-size: 44rpx;
+  font-weight: 600;
+}
+
+.section {
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+}
+
+.section-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 500;
+  margin-bottom: 24rpx;
+}
+
+.row {
+  margin-bottom: 24rpx;
+}
+
+.muted {
+  color: #888;
+  font-size: 26rpx;
+}
+
+.primary {
+  background-color: #0d6efd;
+  color: #ffffff;
+}
+
+.secondary {
+  background-color: #ffffff;
+  color: #0d6efd;
+  border: 2rpx solid #0d6efd;
+}

@@ -1,0 +1,10 @@
+<view class="card" bindtap="onTap">
+  <image wx:if="{{photoUrl}}" class="photo" src="{{photoUrl}}" mode="aspectFill" />
+  <view wx:else class="photo placeholder">{{photoFallback}}</view>
+  <view class="info">
+    <text class="name">{{pet.name}}</text>
+    <text class="meta">{{speciesLabel}}{{breedSuffix}}</text>
+    <text wx:if="{{weightLabel}}" class="meta">{{weightLabel}}</text>
+    <view wx:if="{{vaccineWarning}}" class="warning">{{vaccineWarning}}</view>
+  </view>
+</view>

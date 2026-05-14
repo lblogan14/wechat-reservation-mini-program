@@ -1,0 +1,15 @@
+<view class="container">
+  <view class="hero">
+    <text class="title">{{title}}</text>
+    <text class="subtitle">{{subtitle}}</text>
+  </view>
+
+  <view class="actions">
+    <button class="primary" bindtap="onBookTap">{{ctaBook}}</button>
+    <button class="secondary" bindtap="onMyBookingsTap">{{ctaMyBookings}}</button>
+  </view>
+
+  <view class="placeholder">
+    <text>{{placeholder}}</text>
+  </view>
+</view>

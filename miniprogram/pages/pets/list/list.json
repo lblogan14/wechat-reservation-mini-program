@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "我的宠物",
+  "usingComponents": {
+    "pet-card": "/components/pet-card/index"
+  }
+}

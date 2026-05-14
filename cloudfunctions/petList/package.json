@@ -1,0 +1,9 @@
+{
+  "name": "petList",
+  "version": "1.0.0",
+  "description": "List pets owned by the calling user (scoped by openid).",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.0"
+  }
+}

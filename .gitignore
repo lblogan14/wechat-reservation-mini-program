@@ -1,0 +1,14 @@
+node_modules/
+miniprogram/miniprogram_npm/
+cloudfunctions/**/node_modules/
+
+project.private.config.json
+
+dist/
+*.tsbuildinfo
+
+.idea/
+.vscode/launch.json
+
+.DS_Store
+Thumbs.db

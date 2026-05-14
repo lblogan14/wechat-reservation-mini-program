@@ -1,0 +1,32 @@
+<view class="container">
+  <view class="header">
+    <text class="title">{{title}}</text>
+  </view>
+
+  <block wx:if="{{!signedIn}}">
+    <view class="empty">
+      <text>{{authRequiredText}}</text>
+      <button class="primary" bindtap="goToProfile">{{signinCta}}</button>
+    </view>
+  </block>
+  <block wx:elif="{{loading}}">
+    <view class="empty"><text class="muted">{{loadingText}}</text></view>
+  </block>
+  <block wx:elif="{{pets.length === 0}}">
+    <view class="empty">
+      <text class="muted">{{emptyText}}</text>
+    </view>
+  </block>
+  <block wx:else>
+    <view class="list">
+      <pet-card
+        wx:for="{{pets}}"
+        wx:key="_id"
+        pet="{{item}}"
+        bind:tap="onCardTap"
+      />
+    </view>
+  </block>
+
+  <button wx:if="{{signedIn}}" class="fab" bindtap="onAddTap">+</button>
+</view>

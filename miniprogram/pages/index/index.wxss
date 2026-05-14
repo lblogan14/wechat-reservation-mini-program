@@ -1,0 +1,43 @@
+.hero {
+  margin-top: 64rpx;
+  margin-bottom: 64rpx;
+  text-align: center;
+}
+
+.title {
+  display: block;
+  font-size: 56rpx;
+  font-weight: 600;
+  margin-bottom: 24rpx;
+}
+
+.subtitle {
+  display: block;
+  font-size: 30rpx;
+  color: #666;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+  margin-bottom: 64rpx;
+}
+
+.actions .primary {
+  background-color: #0d6efd;
+  color: #ffffff;
+}
+
+.actions .secondary {
+  background-color: #ffffff;
+  color: #0d6efd;
+  border: 2rpx solid #0d6efd;
+}
+
+.placeholder {
+  color: #999;
+  font-size: 26rpx;
+  text-align: center;
+  padding: 24rpx;
+}

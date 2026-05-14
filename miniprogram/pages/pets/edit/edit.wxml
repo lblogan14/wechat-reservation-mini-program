@@ -1,0 +1,106 @@
+<view class="container">
+  <view class="header">
+    <text class="title">{{title}}</text>
+  </view>
+
+  <view class="card">
+    <view class="field">
+      <text class="label">{{labels.photo}}</text>
+      <view class="photo-row">
+        <image wx:if="{{pet.photoFileID}}" class="photo" src="{{pet.photoFileID}}" mode="aspectFill" />
+        <view wx:else class="photo placeholder">+</view>
+        <button class="link" bindtap="onChoosePhoto">{{labels.photoChoose}}</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="field">
+      <text class="label">{{labels.name}}<text class="req"> *</text></text>
+      <input class="input" value="{{pet.name}}" bindinput="onNameInput" placeholder="{{placeholders.name}}" />
+    </view>
+
+    <view class="field">
+      <text class="label">{{labels.species}}<text class="req"> *</text></text>
+      <picker class="picker" range="{{speciesOptions}}" range-key="label" value="{{speciesIndex}}" bindchange="onSpeciesChange">
+        <view class="picker-value">{{speciesOptions[speciesIndex].label}}</view>
+      </picker>
+    </view>
+
+    <view class="field">
+      <text class="label">{{labels.breed}}</text>
+      <input class="input" value="{{pet.breed}}" bindinput="onBreedInput" placeholder="{{placeholders.breed}}" />
+    </view>
+
+    <view class="field">
+      <text class="label">{{labels.sex}}</text>
+      <picker class="picker" range="{{sexOptions}}" range-key="label" value="{{sexIndex}}" bindchange="onSexChange">
+        <view class="picker-value">{{sexOptions[sexIndex].label}}</view>
+      </picker>
+    </view>
+
+    <view class="field row">
+      <text class="label">{{labels.neutered}}</text>
+      <switch checked="{{pet.neutered}}" bindchange="onNeuteredChange" />
+    </view>
+
+    <view class="field">
+      <text class="label">{{labels.birthdate}}</text>
+      <picker class="picker" mode="date" value="{{birthDateStr}}" bindchange="onBirthDateChange">
+        <view class="picker-value">{{birthDateStr || placeholders.pickDate}}</view>
+      </picker>
+    </view>
+
+    <view class="field">
+      <text class="label">{{labels.weight}}</text>
+      <input class="input" type="digit" value="{{weightInput}}" bindinput="onWeightInput" placeholder="0.0" />
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="field">
+      <text class="label">{{labels.vaccineCert}}</text>
+      <view class="photo-row">
+        <image wx:if="{{pet.vaccineCertFileID}}" class="photo small" src="{{pet.vaccineCertFileID}}" mode="aspectFill" />
+        <view wx:else class="photo small placeholder">+</view>
+        <button class="link" bindtap="onChooseVaccineCert">{{labels.vaccineChoose}}</button>
+      </view>
+    </view>
+
+    <view class="field">
+      <text class="label">{{labels.vaccineExpiry}}</text>
+      <picker class="picker" mode="date" value="{{vaccineExpiryStr}}" bindchange="onVaccineExpiryChange">
+        <view class="picker-value">{{vaccineExpiryStr || placeholders.pickDate}}</view>
+      </picker>
+    </view>
+
+    <view wx:if="{{vaccineWarning}}" class="warning">{{vaccineWarning}}</view>
+  </view>
+
+  <view class="card">
+    <view class="field">
+      <text class="label">{{labels.feeding}}</text>
+      <textarea class="textarea" value="{{pet.feedingSchedule}}" bindinput="onFeedingInput" placeholder="{{placeholders.feeding}}" />
+    </view>
+
+    <view class="field">
+      <text class="label">{{labels.behavior}}</text>
+      <textarea class="textarea" value="{{pet.behaviorNotes}}" bindinput="onBehaviorInput" placeholder="{{placeholders.behavior}}" />
+    </view>
+
+    <view class="field">
+      <text class="label">{{labels.medical}}</text>
+      <textarea class="textarea" value="{{pet.medicalConditions}}" bindinput="onMedicalInput" placeholder="{{placeholders.medical}}" />
+    </view>
+
+    <view class="field">
+      <text class="label">{{labels.emergency}}</text>
+      <input class="input" value="{{pet.emergencyContact}}" bindinput="onEmergencyInput" placeholder="{{placeholders.emergency}}" />
+    </view>
+  </view>
+
+  <view class="actions">
+    <button class="primary" bindtap="onSave" disabled="{{saving}}">{{labels.save}}</button>
+    <button wx:if="{{pet._id}}" class="danger" bindtap="onDelete">{{labels.delete}}</button>
+  </view>
+</view>

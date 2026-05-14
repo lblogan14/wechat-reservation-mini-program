@@ -1,0 +1,25 @@
+<view class="container">
+  <view class="header">
+    <text class="title">{{title}}</text>
+  </view>
+
+  <view class="section">
+    <block wx:if="{{signedIn}}">
+      <view class="row">
+        <text class="muted">openid: {{openidDisplay}}</text>
+      </view>
+      <button class="secondary" bindtap="onSignOutTap">{{signoutCta}}</button>
+    </block>
+    <block wx:else>
+      <view class="row">
+        <text class="muted">{{notLoggedIn}}</text>
+      </view>
+      <button class="primary" bindtap="onSignInTap">{{signinCta}}</button>
+    </block>
+  </view>
+
+  <view class="section">
+    <text class="section-title">{{languageLabel}}</text>
+    <lang-switcher />
+  </view>
+</view>
