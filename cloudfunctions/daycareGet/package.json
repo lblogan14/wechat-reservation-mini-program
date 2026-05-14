@@ -1,0 +1,9 @@
+{
+  "name": "daycareGet",
+  "version": "1.0.0",
+  "description": "Return the singleton daycareConfig row, or null.",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.0"
+  }
+}

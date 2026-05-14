@@ -1,0 +1,83 @@
+<view class="container">
+  <view class="header">
+    <text class="title">{{title}}</text>
+  </view>
+
+  <block wx:if="{{notOwner}}">
+    <view class="card empty"><text class="muted">{{notOwnerText}}</text></view>
+  </block>
+
+  <block wx:else>
+    <view class="card">
+      <view class="field">
+        <text class="label">{{labels.photo}}</text>
+        <view class="photo-row">
+          <image wx:if="{{photoFileID}}" class="photo" src="{{photoFileID}}" mode="aspectFill" />
+          <view wx:else class="photo placeholder">+</view>
+          <button class="link" bindtap="onChoosePhoto">{{labels.photoChoose}}</button>
+        </view>
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="field">
+        <text class="label">{{labels.nameZh}}</text>
+        <input class="input" value="{{config.nameZh}}" bindinput="onNameZhInput" />
+      </view>
+      <view class="field">
+        <text class="label">{{labels.nameEn}}</text>
+        <input class="input" value="{{config.nameEn}}" bindinput="onNameEnInput" />
+      </view>
+      <view class="field">
+        <text class="label">{{labels.address}}</text>
+        <input class="input" value="{{config.address}}" bindinput="onAddressInput" />
+      </view>
+      <view class="field">
+        <text class="label">{{labels.phone}}</text>
+        <input class="input" type="number" value="{{config.phone}}" bindinput="onPhoneInput" />
+      </view>
+      <view class="field">
+        <text class="label">{{labels.hoursOpen}}</text>
+        <picker class="picker" mode="time" value="{{config.hoursOpen}}" bindchange="onHoursOpenChange">
+          <view class="picker-value">{{config.hoursOpen || placeholders.pickTime}}</view>
+        </picker>
+      </view>
+      <view class="field">
+        <text class="label">{{labels.hoursClose}}</text>
+        <picker class="picker" mode="time" value="{{config.hoursClose}}" bindchange="onHoursCloseChange">
+          <view class="picker-value">{{config.hoursClose || placeholders.pickTime}}</view>
+        </picker>
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="field">
+        <text class="label">{{labels.cancelZh}}</text>
+        <textarea class="textarea" value="{{config.cancelPolicyZh}}" bindinput="onCancelZhInput" />
+      </view>
+      <view class="field">
+        <text class="label">{{labels.cancelEn}}</text>
+        <textarea class="textarea" value="{{config.cancelPolicyEn}}" bindinput="onCancelEnInput" />
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="field">
+        <text class="label">{{labels.agreementZh}}</text>
+        <textarea class="textarea tall" value="{{config.agreementZh}}" bindinput="onAgreementZhInput" />
+      </view>
+      <view class="field">
+        <text class="label">{{labels.agreementEn}}</text>
+        <textarea class="textarea tall" value="{{config.agreementEn}}" bindinput="onAgreementEnInput" />
+      </view>
+      <view class="field">
+        <text class="label">{{labels.agreementVersion}}</text>
+        <input class="input" value="{{config.agreementVersion}}" bindinput="onAgreementVersionInput" placeholder="{{placeholders.agreementVersion}}" />
+      </view>
+    </view>
+
+    <view class="actions">
+      <button class="primary" bindtap="onSave" disabled="{{saving}}">{{labels.save}}</button>
+    </view>
+  </block>
+</view>

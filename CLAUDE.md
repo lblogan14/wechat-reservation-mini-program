@@ -4,15 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-v0.2 landed on 2026-05-14 (pet profile CRUD). The repo now provides:
+v0.3 landed on 2026-05-14 (daycare home identity). The repo now provides:
 
 - Project shell + bilingual zh/en i18n + locale-reactive tab bar
-- Sign-in flow (openid via `wx.cloud.callFunction('login')`, persisted in `wx.storage`)
+- Sign-in flow (openid via `wx.cloud.callFunction('login')`, persisted in `wx.storage`); user record (with `role`) cached in `App.globalData.user`
 - Pet profile CRUD: list page (tab) + edit page with full schema (photo, vaccine cert + expiry, breed/sex/neutered/birthdate/weight, feeding/behavior/medical notes, emergency contact)
+- Daycare identity: read-only card on home tab + owner-only edit page (`pages/daycare/edit/`). Owner bootstrap via `userPromote` cloud function (env-var-gated code).
 - Three tabs: 首页 / 我的宠物 / 我的, all bilingual-aware
-- Four cloud functions: `login`, `petList`, `petUpsert`, `petDelete` — all owner-scoped by `openid`
+- Eight cloud functions: `login`, `petList`, `petUpsert`, `petDelete`, `daycareGet`, `daycareUpsert`, `userGet`, `userPromote`
 
-Not yet implemented: booking flow, calendar with capacity counter, owner dashboard, subscribe-message reminders. See **v1 backlog**.
+Not yet implemented: owner service/availability editor, calendar with capacity counter, booking flow, owner dashboard, subscribe-message reminders. See **v1 backlog**.
 
 ## Product goal
 
@@ -32,8 +33,9 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 2. **Install dev dependencies:** `npm install` at the repo root. This installs `miniprogram-api-typings` (TS types for `wx.*`) and `typescript`. Run `npm run typecheck` to type-check without emitting.
 3. **Open 微信开发者工具** (download: https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html). Import this repo directory; the IDE picks up [project.config.json](project.config.json) automatically and detects the TS source.
 4. **Create a 云开发 environment:** in the IDE, open the 云开发 panel → 新建环境. Copy the env ID into [miniprogram/app.ts](miniprogram/app.ts) at the `// TODO: replace with your 云开发 env ID` comment.
-5. **Create database collections** in the 云开发 console (the SDK does not auto-create them). For v0.2: `users` + `pets`. Future milestones will add `services`, `availabilityOverrides`, `bookings`.
-6. **Deploy cloud functions:** for each folder under [cloudfunctions/](cloudfunctions/), right-click in the IDE → *上传并部署：云端安装依赖（不上传 node_modules）*. The IDE handles `npm install` server-side. Current functions: `login`, `petList`, `petUpsert`, `petDelete`.
+5. **Create database collections** in the 云开发 console (the SDK does not auto-create them). For v0.3: `users` + `pets` + `daycareConfig`. Future milestones will add `services`, `availabilityOverrides`, `bookings`.
+6. **Deploy cloud functions:** for each folder under [cloudfunctions/](cloudfunctions/), right-click in the IDE → *上传并部署：云端安装依赖（不上传 node_modules）*. The IDE handles `npm install` server-side. Current functions: `login`, `petList`, `petUpsert`, `petDelete`, `daycareGet`, `daycareUpsert`, `userGet`, `userPromote`.
+   - For `userPromote`, also set a `BOOTSTRAP_OWNER_CODE` environment variable on the cloud function (cloud-function panel → 环境变量). The first parent uses that code in the profile page's "Promote to owner" form to flip their `User.role` to `'owner'`. Without the env var, the function refuses all promotions.
 7. **Preview:** click *预览* in the IDE to generate a QR code, scan with WeChat. Or run in the simulator.
 
 ## Project layout
@@ -46,18 +48,21 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 │   ├── app.wxss                       # global styles
 │   ├── tsconfig.json
 │   ├── pages/
-│   │   ├── index/                     # home / landing page
+│   │   ├── index/                     # home / landing page — daycare info card + booking CTAs
 │   │   ├── pets/list/                 # tab: pet list with FAB and auth gate
 │   │   ├── pets/edit/                 # subpage: new or edit pet (?id=...)
-│   │   └── profile/                   # "me" tab — sign-in + language switcher
+│   │   ├── daycare/edit/              # subpage: owner-only daycare config editor
+│   │   └── profile/                   # "me" tab — sign-in + owner tools + language switcher
 │   ├── components/
 │   │   ├── lang-switcher/             # zh/en toggle
 │   │   └── pet-card/                  # list row with vaccine warning chip
 │   ├── services/                      # cloud-function client wrappers
 │   │   ├── cloud.ts                   # call<T>() helper around wx.cloud.callFunction
-│   │   ├── auth.ts                    # signIn() → openid + user record
-│   │   ├── openid.ts                  # getOpenid / setOpenid helpers (globalData + wx.storage)
-│   │   └── pet.ts                     # petList / petUpsert / petDelete
+│   │   ├── auth.ts                    # signIn() / signOut() — wires openid + user cache
+│   │   ├── openid.ts                  # getOpenid / setOpenid (globalData + wx.storage)
+│   │   ├── user.ts                    # getCurrentUser / isOwner / refreshCurrentUser / promoteToOwner
+│   │   ├── pet.ts                     # petList / petUpsert / petDelete
+│   │   └── daycare.ts                 # daycareGet / daycareUpsert
 │   ├── i18n/
 │   │   ├── index.ts                   # locale store + t()
 │   │   ├── zh.ts                      # source-of-truth dictionary (other locales conform to its shape)
@@ -66,9 +71,13 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 │       └── models.d.ts                # PetDaycare.* domain models (User, Pet, Service, Booking, …)
 ├── cloudfunctions/
 │   ├── login/                         # resolve openid via cloud.getWXContext(), upsert user
+│   ├── userGet/                       # return current user record (so client can role-gate)
+│   ├── userPromote/                   # bootstrap owner role; gated by BOOTSTRAP_OWNER_CODE env var
 │   ├── petList/                       # list pets owned by caller
 │   ├── petUpsert/                     # create or update a pet (ownership-checked)
-│   └── petDelete/                     # delete a pet (ownership-checked)
+│   ├── petDelete/                     # delete a pet (ownership-checked)
+│   ├── daycareGet/                    # return the singleton daycareConfig row
+│   └── daycareUpsert/                 # upsert daycareConfig — owner role required
 ├── project.config.json                # IDE-level config (AppID goes here)
 ├── sitemap.json
 └── package.json                       # dev-only: api-typings + typescript
@@ -76,7 +85,8 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 
 ## Architecture notes
 
-- **Auth:** `wx.cloud.callFunction({ name: 'login' })`. The cloud function reads `cloud.getWXContext().OPENID` (injected by the 云开发 runtime) and upserts a `users` record. The client stashes the openid in `App.globalData.openid` and `wx.storage`. Pet pages check `getOpenid()` on `onShow`; if empty, they render an auth-required prompt that switches to the profile tab.
+- **Auth:** `wx.cloud.callFunction({ name: 'login' })`. The cloud function reads `cloud.getWXContext().OPENID` (injected by the 云开发 runtime) and upserts a `users` record. The client stashes the openid in `App.globalData.openid` + `wx.storage` and the full `User` (with `role`) in `App.globalData.user` + `wx.storage`. Pet pages check `getOpenid()` on `onShow`; if empty, they render an auth-required prompt that switches to the profile tab.
+- **Owner role gating:** `User.role` is `'parent' | 'owner' | 'staff'`. Role-gated pages call `isOwner()` from [services/user.ts](miniprogram/services/user.ts); on first entry they also `await refreshCurrentUser()` to defeat stale cache. Bootstrap path: a parent signs in, types the `BOOTSTRAP_OWNER_CODE` value into the profile page's "Promote to owner" form, which calls `userPromote` → flips their `users` row to `role: 'owner'`. Server is the only trust boundary (`daycareUpsert` re-reads role on every call).
 - **Pet ownership:** every pet stores `ownerOpenid`. `petList` filters by it; `petUpsert` / `petDelete` reject calls where `existing.data.ownerOpenid !== OPENID`. The cloud function — not the client — is the trust boundary.
 - **Vaccine gating policy (v1):** **warning only.** The pet card and edit page surface a yellow chip if `vaccineCertFileID` or `vaccineExpiry` is missing, or `vaccineExpiry < now`. Bookings will still be allowed; the daycare owner verifies the paper cert at drop-off. To make this a hard gate later, add the check in the `bookingCreate` cloud function (not yet built).
 - **Service model is owner-configurable (decided 2026-05-14):** there is no fixed `ServiceTier` enum. Each row in the `services` collection is its own tier — the owner creates rooms/tiers with `{ nameZh, nameEn, pricePerNight, capacityPerDay }` from the (not-yet-built) owner editor. `AvailabilityOverride` and `Booking` reference a service by `serviceId: string` (Service._id), not an enum.
@@ -96,8 +106,8 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 ## v1 backlog (priority order)
 
 1. ~~Pet profile CRUD~~ — landed in v0.2.
-2. **Daycare home identity page** (`daycareConfig` singleton): owner edits home name, address, phone, photos, operating hours, cancel/refund policy text, 寄养协议 text + version. Parents see read-only view on home tab.
-3. **Owner service/availability editor** — `services` (owner-defined rows; no fixed tier enum) + `availabilityOverrides` collections + an owner-only page gated by `User.role === 'owner'`. Need a way to mark one openid as owner in v1 (manual DB edit acceptable).
+2. ~~Daycare home identity page~~ — landed in v0.3 (single hero photo for now; multi-photo carousel deferred to v2 polish).
+3. **Owner service/availability editor** — `services` (owner-defined rows; no fixed tier enum) + `availabilityOverrides` collections + an owner-only page gated by `User.role === 'owner'`. Bootstrap path for owner role is already in place via `userPromote`.
 4. **Calendar view with per-service daily capacity counter** — uses the capacity formula above; reads `services`, `availabilityOverrides`, and the booked-slot rollup for a date range.
 5. **Booking creation flow** — date-range picker with hour-granularity drop-off/pick-up times, pet multi-select, service picker (rows from `services`), optional add-ons (rows from `addons`), waiver e-sign capturing `agreementAcceptedAt` + `agreementVersion`, confirmation screen showing cancel/refund policy and 寄养协议.
 6. **Recurring bookings** — `Booking.recurrence` describes the template; per-instance bookings carry `parentBookingId`. Generation happens server-side on confirm.

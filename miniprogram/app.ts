@@ -1,17 +1,21 @@
 import { initLocale, onLocaleChange, t } from './i18n/index';
 
 const OPENID_STORAGE_KEY = 'openid';
+const USER_STORAGE_KEY = 'user';
 
 App({
   globalData: {
     openid: '' as string,
     locale: 'zh' as PetDaycare.Locale,
+    user: null as PetDaycare.User | null,
   },
 
   onLaunch() {
     this.initCloud();
     this.globalData.locale = initLocale();
     this.globalData.openid = (wx.getStorageSync(OPENID_STORAGE_KEY) as string) || '';
+    const cachedUser = wx.getStorageSync(USER_STORAGE_KEY) as PetDaycare.User | '';
+    this.globalData.user = cachedUser || null;
     this.refreshTabBar();
     onLocaleChange(() => this.refreshTabBar());
   },

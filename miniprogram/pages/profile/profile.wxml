@@ -18,6 +18,22 @@
     </block>
   </view>
 
+  <block wx:if="{{signedIn}}">
+    <view wx:if="{{isOwner}}" class="section">
+      <text class="section-title">{{ownerToolsLabel}}</text>
+      <button class="secondary" bindtap="onEditDaycareTap">{{editDaycareLabel}}</button>
+    </view>
+    <view wx:else class="section">
+      <text class="section-title">{{promoteTitle}}</text>
+      <text class="muted block">{{promoteHint}}</text>
+      <view class="field">
+        <text class="label">{{promoteCodeLabel}}</text>
+        <input class="input" value="{{promoteCodeInput}}" bindinput="onPromoteCodeInput" placeholder="{{promoteCodePlaceholder}}" />
+      </view>
+      <button class="secondary" bindtap="onPromoteSubmit" disabled="{{promoting || !promoteCodeInput}}">{{promoteSubmit}}</button>
+    </view>
+  </block>
+
   <view class="section">
     <text class="section-title">{{languageLabel}}</text>
     <lang-switcher />

@@ -1,4 +1,10 @@
-import { t, onLocaleChange } from '../../i18n/index';
+import { t, getLocale, onLocaleChange } from '../../i18n/index';
+import { daycareGet } from '../../services/daycare';
+
+function pickLocalized(zh: string | undefined, en: string | undefined, locale: 'zh' | 'en'): string {
+  if (locale === 'en') return en || zh || '';
+  return zh || en || '';
+}
 
 Page({
   data: {
@@ -6,35 +12,78 @@ Page({
     subtitle: '',
     ctaBook: '',
     ctaMyBookings: '',
-    placeholder: '',
+    daycareCardTitle: '',
+    daycareCardEmpty: '',
+    daycareAddressLabel: '',
+    daycarePhoneLabel: '',
+    daycareHoursLabel: '',
+    daycareName: '',
+    daycareAddress: '',
+    daycarePhone: '',
+    daycareHours: '',
+    daycarePhoto: '',
+    daycareLoaded: false,
+    todoBookingFlow: '',
+    todoMyBookings: '',
   },
 
   unsubscribe: undefined as (() => void) | undefined,
+  config: null as PetDaycare.DaycareConfig | null,
 
   onLoad() {
     this.refreshStrings();
     this.unsubscribe = onLocaleChange(() => this.refreshStrings());
   },
 
+  onShow() {
+    this.load();
+  },
+
   onUnload() {
     this.unsubscribe?.();
   },
 
+  async load() {
+    const config = await daycareGet();
+    this.config = config;
+    this.refreshStrings();
+    this.setData({ daycareLoaded: true });
+  },
+
   refreshStrings() {
+    const locale = getLocale();
+    const cfg = this.config;
+    const hoursLine = cfg && cfg.hoursOpen && cfg.hoursClose ? `${cfg.hoursOpen} – ${cfg.hoursClose}` : '';
     this.setData({
       title: t('app_name'),
       subtitle: t('greeting'),
       ctaBook: t('cta_book'),
       ctaMyBookings: t('cta_my_bookings'),
-      placeholder: t('placeholder_v01'),
+      daycareCardTitle: t('daycare_card_title'),
+      daycareCardEmpty: t('daycare_card_empty'),
+      daycareAddressLabel: t('daycare_address'),
+      daycarePhoneLabel: t('daycare_phone'),
+      daycareHoursLabel: t('daycare_hours'),
+      todoBookingFlow: t('todo_booking_flow'),
+      todoMyBookings: t('todo_my_bookings'),
+      daycareName: cfg ? pickLocalized(cfg.nameZh, cfg.nameEn, locale) : '',
+      daycareAddress: cfg?.address || '',
+      daycarePhone: cfg?.phone || '',
+      daycareHours: hoursLine,
+      daycarePhoto: cfg?.photoFileIDs?.[0] || '',
     });
   },
 
   onBookTap() {
-    wx.showToast({ title: t('todo_booking_flow'), icon: 'none' });
+    wx.showToast({ title: this.data.todoBookingFlow, icon: 'none' });
   },
 
   onMyBookingsTap() {
-    wx.showToast({ title: t('todo_my_bookings'), icon: 'none' });
+    wx.showToast({ title: this.data.todoMyBookings, icon: 'none' });
+  },
+
+  onCallPhone() {
+    if (!this.data.daycarePhone) return;
+    wx.makePhoneCall({ phoneNumber: this.data.daycarePhone });
   },
 });

@@ -3,7 +3,8 @@
     "pages/index/index",
     "pages/pets/list/list",
     "pages/profile/profile",
-    "pages/pets/edit/edit"
+    "pages/pets/edit/edit",
+    "pages/daycare/edit/edit"
   ],
   "window": {
     "backgroundTextStyle": "light",

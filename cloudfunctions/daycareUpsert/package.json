@@ -1,0 +1,9 @@
+{
+  "name": "daycareUpsert",
+  "version": "1.0.0",
+  "description": "Create or update the singleton daycareConfig row. Owner role required.",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.0"
+  }
+}

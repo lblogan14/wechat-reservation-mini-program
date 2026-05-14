@@ -1,0 +1,9 @@
+{
+  "name": "userGet",
+  "version": "1.0.0",
+  "description": "Return the user record for the calling openid.",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.0"
+  }
+}

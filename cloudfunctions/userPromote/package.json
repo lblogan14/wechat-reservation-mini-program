@@ -1,0 +1,9 @@
+{
+  "name": "userPromote",
+  "version": "1.0.0",
+  "description": "Bootstrap owner role using a code matching BOOTSTRAP_OWNER_CODE env var.",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.0"
+  }
+}

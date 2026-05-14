@@ -4,12 +4,31 @@
     <text class="subtitle">{{subtitle}}</text>
   </view>
 
+  <view class="card daycare-card">
+    <text class="card-title">{{daycareCardTitle}}</text>
+    <block wx:if="{{daycareName}}">
+      <image wx:if="{{daycarePhoto}}" class="daycare-photo" src="{{daycarePhoto}}" mode="aspectFill" />
+      <text class="daycare-name">{{daycareName}}</text>
+      <view wx:if="{{daycareAddress}}" class="info-row">
+        <text class="info-label">{{daycareAddressLabel}}</text>
+        <text class="info-value">{{daycareAddress}}</text>
+      </view>
+      <view wx:if="{{daycarePhone}}" class="info-row tappable" bindtap="onCallPhone">
+        <text class="info-label">{{daycarePhoneLabel}}</text>
+        <text class="info-value link">{{daycarePhone}}</text>
+      </view>
+      <view wx:if="{{daycareHours}}" class="info-row">
+        <text class="info-label">{{daycareHoursLabel}}</text>
+        <text class="info-value">{{daycareHours}}</text>
+      </view>
+    </block>
+    <block wx:elif="{{daycareLoaded}}">
+      <text class="muted">{{daycareCardEmpty}}</text>
+    </block>
+  </view>
+
   <view class="actions">
     <button class="primary" bindtap="onBookTap">{{ctaBook}}</button>
     <button class="secondary" bindtap="onMyBookingsTap">{{ctaMyBookings}}</button>
-  </view>
-
-  <view class="placeholder">
-    <text>{{placeholder}}</text>
   </view>
 </view>
