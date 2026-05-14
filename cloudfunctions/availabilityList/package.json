@@ -1,0 +1,9 @@
+{
+  "name": "availabilityList",
+  "version": "1.0.0",
+  "description": "List availability overrides, optionally scoped by date range and/or serviceId.",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.0"
+  }
+}

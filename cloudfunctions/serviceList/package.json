@@ -1,0 +1,9 @@
+{
+  "name": "serviceList",
+  "version": "1.0.0",
+  "description": "List services (rooms/tiers). Defaults to active only; pass { includeInactive: true } for owner views.",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.0"
+  }
+}

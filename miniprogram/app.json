@@ -4,7 +4,11 @@
     "pages/pets/list/list",
     "pages/profile/profile",
     "pages/pets/edit/edit",
-    "pages/daycare/edit/edit"
+    "pages/daycare/edit/edit",
+    "pages/services/list/list",
+    "pages/services/edit/edit",
+    "pages/availability/list/list",
+    "pages/availability/edit/edit"
   ],
   "window": {
     "backgroundTextStyle": "light",

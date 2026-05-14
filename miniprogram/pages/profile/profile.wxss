@@ -66,3 +66,7 @@
   color: #0d6efd;
   border: 2rpx solid #0d6efd;
 }
+
+.secondary.stack {
+  margin-bottom: 16rpx;
+}

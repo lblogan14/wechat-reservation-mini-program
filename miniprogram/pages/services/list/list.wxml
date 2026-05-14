@@ -1,0 +1,36 @@
+<view class="container">
+  <view class="header"><text class="title">{{title}}</text></view>
+
+  <block wx:if="{{notOwner}}">
+    <view class="empty"><text class="muted">{{notOwnerText}}</text></view>
+  </block>
+  <block wx:elif="{{loading}}">
+    <view class="empty"><text class="muted">{{loadingText}}</text></view>
+  </block>
+  <block wx:elif="{{services.length === 0}}">
+    <view class="empty"><text class="muted">{{emptyText}}</text></view>
+  </block>
+  <block wx:else>
+    <view class="list">
+      <view
+        wx:for="{{services}}"
+        wx:key="_id"
+        class="row"
+        data-id="{{item._id}}"
+        bindtap="onCardTap"
+      >
+        <view class="row-main">
+          <text class="name">{{item.displayName}}</text>
+          <text wx:if="{{item.showInactive}}" class="chip">{{inactiveLabel}}</text>
+        </view>
+        <view class="row-meta">
+          <text class="meta">{{item.priceLabel}}</text>
+          <text class="meta dot">·</text>
+          <text class="meta">{{item.capacityLabel}}</text>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <button wx:if="{{!notOwner}}" class="fab" bindtap="onAddTap">+</button>
+</view>

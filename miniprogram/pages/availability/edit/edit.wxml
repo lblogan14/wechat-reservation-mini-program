@@ -1,0 +1,51 @@
+<view class="container">
+  <view class="header"><text class="title">{{title}}</text></view>
+
+  <block wx:if="{{notOwner}}">
+    <view class="card empty"><text class="muted">{{notOwnerText}}</text></view>
+  </block>
+
+  <block wx:elif="{{noServicesHint}}">
+    <view class="card empty"><text class="muted">{{noServicesHint}}</text></view>
+  </block>
+
+  <block wx:else>
+    <view class="card">
+      <view class="field">
+        <text class="label">{{labels.date}}</text>
+        <picker class="picker" mode="date" value="{{dateStr}}" bindchange="onDateChange">
+          <view class="picker-value">{{dateStr || placeholders.date}}</view>
+        </picker>
+      </view>
+      <view class="field">
+        <text class="label">{{labels.service}}</text>
+        <picker class="picker" range="{{serviceOptions}}" range-key="label" value="{{serviceIndex}}" bindchange="onServiceChange">
+          <view class="picker-value">{{serviceOptions[serviceIndex].label}}</view>
+        </picker>
+      </view>
+      <view class="field">
+        <text class="label">{{labels.mode}}</text>
+        <picker class="picker" range="{{modeOptions}}" range-key="label" value="{{modeIndex}}" bindchange="onModeChange">
+          <view class="picker-value">{{modeOptions[modeIndex].label}}</view>
+        </picker>
+      </view>
+      <view wx:if="{{mode === 'delta'}}" class="field">
+        <text class="label">{{labels.delta}}</text>
+        <input class="input" type="number" value="{{deltaInput}}" bindinput="onDeltaInput" />
+      </view>
+      <view wx:else class="field">
+        <text class="label">{{labels.absolute}}</text>
+        <input class="input" type="number" value="{{absoluteInput}}" bindinput="onAbsoluteInput" />
+      </view>
+      <view class="field">
+        <text class="label">{{labels.reason}}</text>
+        <input class="input" value="{{override.reason}}" bindinput="onReasonInput" placeholder="{{placeholders.reason}}" />
+      </view>
+    </view>
+
+    <view class="actions">
+      <button class="primary" bindtap="onSave" disabled="{{saving}}">{{labels.save}}</button>
+      <button wx:if="{{override._id}}" class="danger" bindtap="onDelete">{{labels.delete}}</button>
+    </view>
+  </block>
+</view>

@@ -15,6 +15,8 @@ Page({
     signoutCta: '',
     ownerToolsLabel: '',
     editDaycareLabel: '',
+    manageServicesLabel: '',
+    manageAvailabilityLabel: '',
     promoteTitle: '',
     promoteHint: '',
     promoteCodeLabel: '',
@@ -52,6 +54,8 @@ Page({
       signoutCta: t('profile_logout'),
       ownerToolsLabel: t('owner_tools'),
       editDaycareLabel: t('owner_edit_daycare'),
+      manageServicesLabel: t('owner_manage_services'),
+      manageAvailabilityLabel: t('owner_manage_availability'),
       promoteTitle: t('owner_promote_title'),
       promoteHint: t('owner_promote_hint'),
       promoteCodeLabel: t('owner_promote_code'),
@@ -111,5 +115,13 @@ Page({
 
   onEditDaycareTap() {
     wx.navigateTo({ url: '/pages/daycare/edit/edit' });
+  },
+
+  onManageServicesTap() {
+    wx.navigateTo({ url: '/pages/services/list/list' });
+  },
+
+  onManageAvailabilityTap() {
+    wx.navigateTo({ url: '/pages/availability/list/list' });
   },
 });

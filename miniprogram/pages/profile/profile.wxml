@@ -21,7 +21,9 @@
   <block wx:if="{{signedIn}}">
     <view wx:if="{{isOwner}}" class="section">
       <text class="section-title">{{ownerToolsLabel}}</text>
-      <button class="secondary" bindtap="onEditDaycareTap">{{editDaycareLabel}}</button>
+      <button class="secondary stack" bindtap="onEditDaycareTap">{{editDaycareLabel}}</button>
+      <button class="secondary stack" bindtap="onManageServicesTap">{{manageServicesLabel}}</button>
+      <button class="secondary" bindtap="onManageAvailabilityTap">{{manageAvailabilityLabel}}</button>
     </view>
     <view wx:else class="section">
       <text class="section-title">{{promoteTitle}}</text>

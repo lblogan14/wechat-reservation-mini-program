@@ -1,0 +1,35 @@
+<view class="container">
+  <view class="header"><text class="title">{{title}}</text></view>
+
+  <block wx:if="{{notOwner}}">
+    <view class="empty"><text class="muted">{{notOwnerText}}</text></view>
+  </block>
+  <block wx:elif="{{loading}}">
+    <view class="empty"><text class="muted">{{loadingText}}</text></view>
+  </block>
+  <block wx:elif="{{overrides.length === 0}}">
+    <view class="empty"><text class="muted">{{emptyText}}</text></view>
+  </block>
+  <block wx:else>
+    <view class="list">
+      <view
+        wx:for="{{overrides}}"
+        wx:key="_id"
+        class="row"
+        data-id="{{item._id}}"
+        bindtap="onRowTap"
+      >
+        <view class="row-main">
+          <text class="date">{{item.dateLabel}}</text>
+          <text class="service">{{item.serviceName}}</text>
+        </view>
+        <view class="row-meta">
+          <text class="meta">{{item.summary}}</text>
+          <text wx:if="{{item.reason}}" class="meta reason">· {{item.reason}}</text>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <button wx:if="{{!notOwner}}" class="fab" bindtap="onAddTap">+</button>
+</view>

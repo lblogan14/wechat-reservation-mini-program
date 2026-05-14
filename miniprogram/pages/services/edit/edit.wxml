@@ -1,0 +1,52 @@
+<view class="container">
+  <view class="header"><text class="title">{{title}}</text></view>
+
+  <block wx:if="{{notOwner}}">
+    <view class="card empty"><text class="muted">{{notOwnerText}}</text></view>
+  </block>
+
+  <block wx:else>
+    <view class="card">
+      <view class="field">
+        <text class="label">{{labels.nameZh}}</text>
+        <input class="input" value="{{service.nameZh}}" bindinput="onNameZhInput" />
+      </view>
+      <view class="field">
+        <text class="label">{{labels.nameEn}}</text>
+        <input class="input" value="{{service.nameEn}}" bindinput="onNameEnInput" />
+      </view>
+      <view class="field">
+        <text class="label">{{labels.descZh}}</text>
+        <textarea class="textarea" value="{{service.descriptionZh}}" bindinput="onDescZhInput" />
+      </view>
+      <view class="field">
+        <text class="label">{{labels.descEn}}</text>
+        <textarea class="textarea" value="{{service.descriptionEn}}" bindinput="onDescEnInput" />
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="field">
+        <text class="label">{{labels.price}}</text>
+        <input class="input" type="digit" value="{{priceInput}}" bindinput="onPriceInput" placeholder="{{placeholders.price}}" />
+      </view>
+      <view class="field">
+        <text class="label">{{labels.capacity}}</text>
+        <input class="input" type="number" value="{{capacityInput}}" bindinput="onCapacityInput" placeholder="{{placeholders.capacity}}" />
+      </view>
+      <view class="field">
+        <text class="label">{{labels.sort}}</text>
+        <input class="input" type="number" value="{{sortInput}}" bindinput="onSortInput" />
+      </view>
+      <view class="field row">
+        <text class="label">{{labels.active}}</text>
+        <switch checked="{{service.active}}" bindchange="onActiveChange" />
+      </view>
+    </view>
+
+    <view class="actions">
+      <button class="primary" bindtap="onSave" disabled="{{saving}}">{{labels.save}}</button>
+      <button wx:if="{{service._id}}" class="danger" bindtap="onDelete">{{labels.delete}}</button>
+    </view>
+  </block>
+</view>

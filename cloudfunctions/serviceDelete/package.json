@@ -1,0 +1,9 @@
+{
+  "name": "serviceDelete",
+  "version": "1.0.0",
+  "description": "Hard-delete a service. Owner role required; refuses if bookings reference it.",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.0"
+  }
+}
