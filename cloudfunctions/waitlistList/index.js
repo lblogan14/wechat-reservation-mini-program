@@ -7,11 +7,11 @@ async function isOwner(db, openid) {
   return res.data.length > 0 && res.data[0].role === 'owner';
 }
 
-async function enrich(db, bookings) {
-  if (!bookings.length) return bookings;
-  const serviceIds = Array.from(new Set(bookings.map((b) => b.serviceId).filter(Boolean)));
-  const petIds = Array.from(new Set(bookings.flatMap((b) => b.petIds || [])));
+async function enrich(db, entries) {
+  if (!entries.length) return entries;
   const _ = db.command;
+  const serviceIds = Array.from(new Set(entries.map((e) => e.serviceId).filter(Boolean)));
+  const petIds = Array.from(new Set(entries.flatMap((e) => e.petIds || [])));
   const [svcRes, petRes] = await Promise.all([
     serviceIds.length
       ? db.collection('services').where({ _id: _.in(serviceIds) }).limit(200).get()
@@ -22,14 +22,14 @@ async function enrich(db, bookings) {
   ]);
   const sMap = new Map(svcRes.data.map((s) => [s._id, s]));
   const pMap = new Map(petRes.data.map((p) => [p._id, p]));
-  return bookings.map((b) => {
-    const svc = sMap.get(b.serviceId);
-    const petNames = (b.petIds || []).map((id) => {
+  return entries.map((entry) => {
+    const svc = sMap.get(entry.serviceId);
+    const petNames = (entry.petIds || []).map((id) => {
       const p = pMap.get(id);
       return p ? p.name : null;
     }).filter(Boolean);
     return {
-      ...b,
+      ...entry,
       serviceNameZh: svc ? svc.nameZh : '',
       serviceNameEn: svc ? svc.nameEn : '',
       petNames,
@@ -41,19 +41,18 @@ exports.main = async (event) => {
   const { OPENID } = cloud.getWXContext();
   const db = cloud.database();
 
-  // Owners can request all bookings; parents only see their own.
   const wantAll = event && event.scope === 'all';
   const where = wantAll && (await isOwner(db, OPENID)) ? {} : { parentOpenid: OPENID };
 
   try {
-    const res = await db.collection('bookings')
+    const res = await db.collection('waitlistEntries')
       .where(where)
-      .orderBy('dropoffAt', 'desc')
+      .orderBy('createdAt', 'asc')
       .limit(200)
       .get();
     const enriched = await enrich(db, res.data);
-    return { ok: true, bookings: enriched };
+    return { ok: true, entries: enriched };
   } catch (err) {
-    return { ok: true, bookings: [] };
+    return { ok: true, entries: [] };
   }
 };

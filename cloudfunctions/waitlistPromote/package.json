@@ -1,0 +1,9 @@
+{
+  "name": "waitlistPromote",
+  "version": "1.0.0",
+  "description": "Owner-only: convert a waitlist entry into a confirmed booking (re-runs capacity check).",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.0"
+  }
+}

@@ -1,0 +1,68 @@
+.header { padding: 32rpx 0; }
+.title { font-size: 44rpx; font-weight: 600; }
+
+.empty {
+  padding: 96rpx 32rpx;
+  text-align: center;
+}
+
+.muted { color: #888; font-size: 26rpx; }
+
+.row {
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+}
+
+.row-head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 8rpx;
+}
+
+.service {
+  flex: 1;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.meta {
+  display: block;
+  color: #666;
+  font-size: 24rpx;
+  margin-top: 4rpx;
+}
+
+.row-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+
+.primary {
+  flex: 1;
+  background-color: #0d6efd;
+  color: #ffffff;
+  font-size: 26rpx;
+}
+
+.ghost {
+  flex: 1;
+  background-color: transparent;
+  color: #dc3545;
+  border: 2rpx solid #dc3545;
+  font-size: 26rpx;
+}
+
+.chip {
+  font-size: 22rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+}
+
+.chip.waitlist-waiting { background-color: #fff3cd; color: #856404; }
+.chip.waitlist-offered { background-color: #d1ecf1; color: #0c5460; }

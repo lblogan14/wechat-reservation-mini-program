@@ -1,0 +1,153 @@
+import { t, getLocale, onLocaleChange } from '../../../i18n/index';
+import { bookingList, bookingCancel, type EnrichedBooking } from '../../../services/booking';
+
+function localized(zh: string | undefined, en: string | undefined): string {
+  const loc = getLocale();
+  if (loc === 'en') return en || zh || '';
+  return zh || en || '';
+}
+
+function fmt(ts: number): string {
+  const d = new Date(ts);
+  const yyyy = d.getUTCFullYear();
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(d.getUTCDate()).padStart(2, '0');
+  const hh = String(d.getUTCHours()).padStart(2, '0');
+  const mi = String(d.getUTCMinutes()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+}
+
+const STATUS_KEY: Record<PetDaycare.BookingStatus, keyof import('../../../i18n/zh').Dict> = {
+  confirmed: 'bookings_status_confirmed',
+  checked_in: 'bookings_status_checked_in',
+  checked_out: 'bookings_status_checked_out',
+  cancelled: 'bookings_status_cancelled',
+  no_show: 'bookings_status_no_show',
+};
+
+const PAYMENT_KEY: Record<PetDaycare.PaymentStatus, keyof import('../../../i18n/zh').Dict> = {
+  pending: 'booking_detail_payment_pending',
+  paid: 'booking_detail_payment_paid',
+  refunded: 'booking_detail_payment_refunded',
+  waived: 'booking_detail_payment_waived',
+};
+
+Page({
+  data: {
+    titleText: '',
+    labels: {} as Record<string, string>,
+    booking: null as EnrichedBooking | null,
+    serviceName: '',
+    statusLabel: '',
+    statusClass: '',
+    dropoffStr: '',
+    pickupStr: '',
+    petsStr: '',
+    paymentStr: '',
+    recurringNote: '',
+    cancelLabel: '',
+    cancelSeriesLabel: '',
+    cancelBlockedNote: '',
+    canCancelSingle: false,
+    canCancelSeries: false,
+    showRecurringNote: false,
+  },
+
+  unsubscribe: undefined as (() => void) | undefined,
+  bookingId: '',
+
+  async onLoad(opts: Record<string, string | undefined>) {
+    this.bookingId = opts.id || '';
+    this.refreshStrings();
+    this.unsubscribe = onLocaleChange(() => {
+      this.refreshStrings();
+      this.applyBooking();
+    });
+    await this.load();
+  },
+
+  onUnload() {
+    this.unsubscribe?.();
+  },
+
+  refreshStrings() {
+    this.setData({
+      titleText: t('booking_detail_title'),
+      cancelLabel: t('booking_detail_cancel'),
+      cancelSeriesLabel: t('booking_detail_cancel_series'),
+      cancelBlockedNote: t('booking_detail_cancel_blocked'),
+      recurringNote: t('booking_detail_recurring_label'),
+      labels: {
+        service: t('booking_detail_service'),
+        status: t('booking_detail_status'),
+        dates: t('booking_detail_dates'),
+        nights: t('booking_detail_nights'),
+        pets: t('booking_detail_pets'),
+        price: t('booking_detail_price'),
+        payment: t('booking_detail_payment'),
+        notes: t('booking_detail_notes'),
+      },
+    });
+  },
+
+  async load() {
+    const bookings = await bookingList();
+    const found = bookings.find((b) => b._id === this.bookingId) || null;
+    this.data.booking = found;
+    this.applyBooking();
+  },
+
+  applyBooking() {
+    const b = this.data.booking;
+    if (!b) {
+      this.setData({ serviceName: '', statusLabel: '', petsStr: '' });
+      return;
+    }
+    const isRecurringMember = !!(b.recurrence || b.parentBookingId);
+    this.setData({
+      booking: b,
+      serviceName: localized(b.serviceNameZh, b.serviceNameEn),
+      statusLabel: t(STATUS_KEY[b.bookingStatus] || 'bookings_status_confirmed'),
+      statusClass: b.bookingStatus,
+      dropoffStr: fmt(b.dropoffAt),
+      pickupStr: fmt(b.pickupAt),
+      petsStr: (b.petNames || []).join(' · '),
+      paymentStr: t(PAYMENT_KEY[b.paymentStatus] || 'booking_detail_payment_pending'),
+      showRecurringNote: isRecurringMember,
+      canCancelSingle: b.bookingStatus === 'confirmed',
+      canCancelSeries: b.bookingStatus === 'confirmed' && isRecurringMember,
+    });
+  },
+
+  async onCancelTap() {
+    if (!this.data.booking || !this.data.canCancelSingle) return;
+    const confirm = await wx.showModal({
+      title: t('booking_detail_cancel'),
+      content: t('booking_detail_cancel_confirm'),
+    });
+    if (!confirm.confirm) return;
+    const res = await bookingCancel({ _id: this.data.booking._id! });
+    if (!res.ok) {
+      wx.showToast({ title: res.error || 'Cancel failed', icon: 'error' });
+      return;
+    }
+    wx.showToast({ title: t('booking_cancelled_toast'), icon: 'success' });
+    setTimeout(() => wx.navigateBack(), 600);
+  },
+
+  async onCancelSeriesTap() {
+    if (!this.data.booking || !this.data.canCancelSeries) return;
+    const confirm = await wx.showModal({
+      title: t('booking_detail_cancel_series'),
+      content: t('booking_detail_cancel_series_confirm'),
+    });
+    if (!confirm.confirm) return;
+    const res = await bookingCancel({ _id: this.data.booking._id!, cancelSeries: true });
+    if (!res.ok) {
+      wx.showToast({ title: res.error || 'Cancel failed', icon: 'error' });
+      return;
+    }
+    wx.showToast({ title: t('booking_cancelled_toast'), icon: 'success' });
+    setTimeout(() => wx.navigateBack(), 600);
+  },
+});

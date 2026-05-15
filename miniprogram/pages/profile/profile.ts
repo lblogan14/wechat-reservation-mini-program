@@ -17,6 +17,7 @@ Page({
     editDaycareLabel: '',
     manageServicesLabel: '',
     manageAvailabilityLabel: '',
+    manageWaitlistLabel: '',
     promoteTitle: '',
     promoteHint: '',
     promoteCodeLabel: '',
@@ -56,6 +57,7 @@ Page({
       editDaycareLabel: t('owner_edit_daycare'),
       manageServicesLabel: t('owner_manage_services'),
       manageAvailabilityLabel: t('owner_manage_availability'),
+      manageWaitlistLabel: t('owner_manage_waitlist'),
       promoteTitle: t('owner_promote_title'),
       promoteHint: t('owner_promote_hint'),
       promoteCodeLabel: t('owner_promote_code'),
@@ -123,5 +125,9 @@ Page({
 
   onManageAvailabilityTap() {
     wx.navigateTo({ url: '/pages/availability/list/list' });
+  },
+
+  onManageWaitlistTap() {
+    wx.navigateTo({ url: '/pages/waitlist/queue/queue' });
   },
 });

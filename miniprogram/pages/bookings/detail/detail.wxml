@@ -1,0 +1,53 @@
+<view class="container">
+  <view class="header"><text class="title">{{titleText}}</text></view>
+
+  <block wx:if="{{booking}}">
+    <view class="card">
+      <view class="row">
+        <text class="label">{{labels.service}}</text>
+        <text class="value">{{serviceName}}</text>
+      </view>
+      <view class="row">
+        <text class="label">{{labels.status}}</text>
+        <text class="chip {{statusClass}}">{{statusLabel}}</text>
+      </view>
+      <view class="row">
+        <text class="label">{{labels.dates}}</text>
+        <view class="value-block">
+          <text>{{dropoffStr}}</text>
+          <text class="muted small">→</text>
+          <text>{{pickupStr}}</text>
+        </view>
+      </view>
+      <view class="row">
+        <text class="label">{{labels.nights}}</text>
+        <text class="value">{{booking.nights}}</text>
+      </view>
+      <view class="row">
+        <text class="label">{{labels.pets}}</text>
+        <text class="value">{{petsStr}}</text>
+      </view>
+      <view class="row">
+        <text class="label">{{labels.price}}</text>
+        <text class="value price">¥{{booking.totalPrice}}</text>
+      </view>
+      <view class="row">
+        <text class="label">{{labels.payment}}</text>
+        <text class="value">{{paymentStr}}</text>
+      </view>
+      <view wx:if="{{booking.parentNotes}}" class="row">
+        <text class="label">{{labels.notes}}</text>
+        <text class="value">{{booking.parentNotes}}</text>
+      </view>
+      <view wx:if="{{showRecurringNote}}" class="row">
+        <text class="muted">{{recurringNote}}</text>
+      </view>
+    </view>
+
+    <view class="actions">
+      <button wx:if="{{canCancelSingle}}" class="danger" bindtap="onCancelTap">{{cancelLabel}}</button>
+      <button wx:if="{{canCancelSeries}}" class="danger outline" bindtap="onCancelSeriesTap">{{cancelSeriesLabel}}</button>
+      <view wx:if="{{!canCancelSingle}}" class="hint muted">{{cancelBlockedNote}}</view>
+    </view>
+  </block>
+</view>

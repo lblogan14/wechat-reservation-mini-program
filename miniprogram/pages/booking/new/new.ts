@@ -4,6 +4,7 @@ import { serviceList } from '../../../services/service';
 import { petList } from '../../../services/pet';
 import { daycareGet } from '../../../services/daycare';
 import { bookingCreate } from '../../../services/booking';
+import { waitlistCreate } from '../../../services/waitlist';
 
 interface ServiceOption {
   value: string;
@@ -454,10 +455,36 @@ Page({
     this.setData({ submitting: false });
 
     if (!res.ok) {
-      const msg = res.error === 'insufficient capacity'
-        ? t('booking_capacity_blocked')
-        : res.error || t('booking_create_failed');
-      wx.showToast({ title: msg, icon: 'error' });
+      if (res.error === 'insufficient capacity') {
+        // Offer waitlist for single-stay bookings only — series waitlisting is more complex.
+        if (!recurrence) {
+          const modal = await wx.showModal({
+            title: t('waitlist_join_title'),
+            content: t('waitlist_join_hint'),
+            confirmText: t('waitlist_join_ok'),
+            cancelText: t('waitlist_join_skip'),
+          });
+          if (modal.confirm) {
+            const wres = await waitlistCreate({
+              serviceId: service.value,
+              petIds,
+              dropoffAt,
+              pickupAt,
+              parentNotes,
+            });
+            if (!wres.ok) {
+              wx.showToast({ title: wres.error || t('waitlist_create_failed'), icon: 'error' });
+              return;
+            }
+            wx.showToast({ title: t('waitlist_create_success'), icon: 'success' });
+            setTimeout(() => wx.navigateBack(), 800);
+            return;
+          }
+        }
+        wx.showToast({ title: t('booking_capacity_blocked'), icon: 'none' });
+        return;
+      }
+      wx.showToast({ title: res.error || t('booking_create_failed'), icon: 'error' });
       return;
     }
 

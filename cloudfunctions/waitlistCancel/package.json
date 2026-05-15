@@ -1,0 +1,9 @@
+{
+  "name": "waitlistCancel",
+  "version": "1.0.0",
+  "description": "Cancel a waitlist entry. Parent can cancel their own; owner can cancel any.",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.0"
+  }
+}

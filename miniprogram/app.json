@@ -10,7 +10,10 @@
     "pages/availability/list/list",
     "pages/availability/edit/edit",
     "pages/calendar/calendar",
-    "pages/booking/new/new"
+    "pages/booking/new/new",
+    "pages/bookings/list/list",
+    "pages/bookings/detail/detail",
+    "pages/waitlist/queue/queue"
   ],
   "window": {
     "backgroundTextStyle": "light",

@@ -1,0 +1,105 @@
+.header { padding: 32rpx 0; }
+.title { font-size: 44rpx; font-weight: 600; }
+
+.card.empty {
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  padding: 96rpx 32rpx;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.muted { color: #888; font-size: 26rpx; }
+
+.section-header {
+  display: block;
+  padding: 24rpx 0 12rpx;
+  color: #666;
+  font-size: 24rpx;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.row {
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+  position: relative;
+}
+
+.row.dim { opacity: 0.6; }
+
+.row-head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 8rpx;
+}
+
+.row-foot {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8rpx;
+}
+
+.service {
+  flex: 1;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.meta {
+  display: block;
+  color: #666;
+  font-size: 24rpx;
+}
+
+.price {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #0d6efd;
+}
+
+.chip {
+  font-size: 22rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+  background-color: #f1f3f5;
+  color: #666;
+}
+
+.chip.confirmed { background-color: #d4edda; color: #155724; }
+.chip.checked_in { background-color: #d1ecf1; color: #0c5460; }
+.chip.checked_out { background-color: #e2e3e5; color: #383d41; }
+.chip.cancelled { background-color: #f8d7da; color: #721c24; }
+.chip.no_show { background-color: #fff3cd; color: #856404; }
+.chip.waitlist-waiting { background-color: #fff3cd; color: #856404; }
+.chip.waitlist-offered { background-color: #d1ecf1; color: #0c5460; }
+.chip.recur {
+  position: absolute;
+  top: 16rpx;
+  right: 16rpx;
+  background-color: #e7f1ff;
+  color: #0d6efd;
+}
+
+.ghost {
+  background-color: transparent;
+  color: #dc3545;
+  border: 2rpx solid #dc3545;
+  font-size: 22rpx;
+  padding: 4rpx 16rpx;
+}
+
+.primary {
+  background-color: #0d6efd;
+  color: #ffffff;
+}

@@ -79,7 +79,7 @@ Page({
   },
 
   onMyBookingsTap() {
-    wx.showToast({ title: this.data.todoMyBookings, icon: 'none' });
+    wx.navigateTo({ url: '/pages/bookings/list/list' });
   },
 
   onCallPhone() {

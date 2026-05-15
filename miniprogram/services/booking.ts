@@ -30,12 +30,37 @@ export async function bookingCreate(args: BookingCreateArgs): Promise<BookingCre
   return res.data;
 }
 
+// Server enrichment adds serviceNameZh, serviceNameEn, petNames to each row.
+export type EnrichedBooking = PetDaycare.Booking & {
+  serviceNameZh?: string;
+  serviceNameEn?: string;
+  petNames?: string[];
+};
+
 export interface BookingListArgs {
   scope?: 'mine' | 'all';
 }
 
-export async function bookingList(args: BookingListArgs = {}): Promise<PetDaycare.Booking[]> {
-  const res = await call<{ ok: boolean; bookings: PetDaycare.Booking[] }>('bookingList', args as Record<string, unknown>);
+export async function bookingList(args: BookingListArgs = {}): Promise<EnrichedBooking[]> {
+  const res = await call<{ ok: boolean; bookings: EnrichedBooking[] }>('bookingList', args as Record<string, unknown>);
   if (!res.ok) return [];
   return res.data.bookings;
+}
+
+export interface BookingCancelArgs {
+  _id: string;
+  cancelSeries?: boolean;
+}
+
+export interface BookingCancelResult {
+  ok: boolean;
+  cancelledIds?: string[];
+  count?: number;
+  error?: string;
+}
+
+export async function bookingCancel(args: BookingCancelArgs): Promise<BookingCancelResult> {
+  const res = await call<BookingCancelResult>('bookingCancel', args as unknown as Record<string, unknown>);
+  if (!res.ok) return { ok: false, error: res.error };
+  return res.data;
 }

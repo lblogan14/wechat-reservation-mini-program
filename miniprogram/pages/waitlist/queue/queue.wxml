@@ -1,0 +1,24 @@
+<view class="container">
+  <view class="header"><text class="title">{{titleText}}</text></view>
+
+  <block wx:if="{{notOwner}}">
+    <view class="empty"><text class="muted">{{notOwnerText}}</text></view>
+  </block>
+  <block wx:elif="{{!queue.length}}">
+    <view class="empty"><text class="muted">{{emptyText}}</text></view>
+  </block>
+  <block wx:else>
+    <view wx:for="{{queue}}" wx:key="_id" class="row">
+      <view class="row-head">
+        <text class="service">{{item.serviceName}}</text>
+        <text class="chip {{item.statusClass}}">{{item.statusLabel}}</text>
+      </view>
+      <text class="meta">{{item.dateLabel}}</text>
+      <text class="meta">{{item.petsLabel}}</text>
+      <view class="row-actions">
+        <button wx:if="{{item.promotable}}" class="primary" data-id="{{item._id}}" bindtap="onPromoteTap">{{promoteLabel}}</button>
+        <button class="ghost" data-id="{{item._id}}" bindtap="onCancelTap">{{cancelLabel}}</button>
+      </view>
+    </view>
+  </block>
+</view>

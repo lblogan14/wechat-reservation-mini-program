@@ -1,0 +1,9 @@
+{
+  "name": "waitlistCreate",
+  "version": "1.0.0",
+  "description": "Insert a waitlist entry for the caller when a booking attempt hits capacity.",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.0"
+  }
+}

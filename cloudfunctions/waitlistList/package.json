@@ -1,0 +1,9 @@
+{
+  "name": "waitlistList",
+  "version": "1.0.0",
+  "description": "List waitlist entries; parents see their own, owners may pass scope:'all' for the queue.",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.0"
+  }
+}

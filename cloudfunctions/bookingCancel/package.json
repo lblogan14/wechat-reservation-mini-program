@@ -1,0 +1,9 @@
+{
+  "name": "bookingCancel",
+  "version": "1.0.0",
+  "description": "Cancel a booking (or its whole recurring series if cancelSeries: true). Only confirmed bookings are cancellable.",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.0"
+  }
+}

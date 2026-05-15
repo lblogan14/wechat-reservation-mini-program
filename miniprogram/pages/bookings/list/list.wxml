@@ -1,0 +1,73 @@
+<view class="container">
+  <view class="header"><text class="title">{{titleText}}</text></view>
+
+  <block wx:if="{{notSignedIn}}">
+    <view class="card empty">
+      <text class="muted">{{loginRequiredText}}</text>
+      <button class="primary" bindtap="goSignIn">{{loginCta}}</button>
+    </view>
+  </block>
+
+  <block wx:elif="{{!upcoming.length && !past.length && !cancelled.length && !waitlist.length}}">
+    <view class="card empty"><text class="muted">{{emptyText}}</text></view>
+  </block>
+
+  <block wx:else>
+    <block wx:if="{{upcoming.length}}">
+      <text class="section-header">{{sectionUpcoming}}</text>
+      <view wx:for="{{upcoming}}" wx:key="_id" class="row" data-id="{{item._id}}" bindtap="onRowTap">
+        <view class="row-head">
+          <text class="service">{{item.serviceName}}</text>
+          <text class="chip {{item.statusClass}}">{{item.statusLabel}}</text>
+        </view>
+        <text class="meta">{{item.dateLabel}}</text>
+        <view class="row-foot">
+          <text class="meta">{{item.petsLabel}}</text>
+          <text class="price">{{item.priceLabel}}</text>
+        </view>
+        <text wx:if="{{item.recurring}}" class="chip recur">↻</text>
+      </view>
+    </block>
+
+    <block wx:if="{{waitlist.length}}">
+      <text class="section-header">{{sectionWaitlist}}</text>
+      <view wx:for="{{waitlist}}" wx:key="_id" class="row waitlist-row">
+        <view class="row-head">
+          <text class="service">{{item.serviceName}}</text>
+          <text class="chip {{item.statusClass}}">{{item.statusLabel}}</text>
+        </view>
+        <text class="meta">{{item.dateLabel}}</text>
+        <view class="row-foot">
+          <text class="meta">{{item.petsLabel}}</text>
+          <button class="ghost" data-id="{{item._id}}" bindtap="onWaitlistCancel" wx:if="{{item.cancellable}}">{{cancelWaitlistConfirm}}</button>
+        </view>
+      </view>
+    </block>
+
+    <block wx:if="{{past.length}}">
+      <text class="section-header">{{sectionPast}}</text>
+      <view wx:for="{{past}}" wx:key="_id" class="row dim" data-id="{{item._id}}" bindtap="onRowTap">
+        <view class="row-head">
+          <text class="service">{{item.serviceName}}</text>
+          <text class="chip {{item.statusClass}}">{{item.statusLabel}}</text>
+        </view>
+        <text class="meta">{{item.dateLabel}}</text>
+        <view class="row-foot">
+          <text class="meta">{{item.petsLabel}}</text>
+          <text class="price">{{item.priceLabel}}</text>
+        </view>
+      </view>
+    </block>
+
+    <block wx:if="{{cancelled.length}}">
+      <text class="section-header">{{sectionCancelled}}</text>
+      <view wx:for="{{cancelled}}" wx:key="_id" class="row dim" data-id="{{item._id}}" bindtap="onRowTap">
+        <view class="row-head">
+          <text class="service">{{item.serviceName}}</text>
+          <text class="chip {{item.statusClass}}">{{item.statusLabel}}</text>
+        </view>
+        <text class="meta">{{item.dateLabel}}</text>
+      </view>
+    </block>
+  </block>
+</view>
