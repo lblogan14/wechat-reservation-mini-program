@@ -114,8 +114,11 @@ exports.main = async () => {
     const dropoffDay = normalizeDate(b.dropoffAt);
     const pickupDay = normalizeDate(b.pickupAt);
 
+    let didSomething = false;
+
     // Drop-off reminder: dropoff day is tomorrow + we haven't sent yet
     if (dropoffTmplId && dropoffDay === tomorrowStart && !b.reminderSentDropoff) {
+      didSomething = true;
       const data = buildData(b, daycareName, serviceName, petNames, fmtDateTime(b.dropoffAt));
       const r = await sendOne(b.parentOpenid, dropoffTmplId, data);
       if (r.ok) {
@@ -130,6 +133,7 @@ exports.main = async () => {
 
     // Pick-up reminder: pickup day is today + we haven't sent yet
     if (pickupTmplId && pickupDay === todayStart && !b.reminderSentPickup) {
+      didSomething = true;
       const data = buildData(b, daycareName, serviceName, petNames, fmtDateTime(b.pickupAt));
       const r = await sendOne(b.parentOpenid, pickupTmplId, data);
       if (r.ok) {
@@ -142,7 +146,7 @@ exports.main = async () => {
       }
     }
 
-    if (!sent && !errors.length) skipped += 1;
+    if (!didSomething) skipped += 1;
   }
 
   return { ok: true, sent, skipped, errors };

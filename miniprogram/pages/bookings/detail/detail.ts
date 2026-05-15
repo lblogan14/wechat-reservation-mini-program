@@ -100,6 +100,11 @@ Page({
     await this.load();
   },
 
+  async onShow() {
+    if (!this.bookingId) return;
+    await this.load();
+  },
+
   onUnload() {
     this.unsubscribe?.();
   },
