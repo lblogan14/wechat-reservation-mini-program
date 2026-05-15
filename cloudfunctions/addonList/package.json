@@ -1,0 +1,9 @@
+{
+  "name": "addonList",
+  "version": "1.0.0",
+  "description": "List service add-ons (active by default; pass includeInactive:true for owner views).",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.0"
+  }
+}

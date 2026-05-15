@@ -106,6 +106,26 @@
       </block>
     </view>
 
+    <view wx:if="{{addons.length}}" class="card">
+      <text class="section-title">{{sectionAddons}}</text>
+      <view wx:for="{{addons}}" wx:key="_id" class="addon-row">
+        <view class="addon-info">
+          <text class="addon-name">{{item.name}}</text>
+          <text wx:if="{{item.description}}" class="addon-desc">{{item.description}}</text>
+          <view class="addon-meta">
+            <text class="addon-price">{{item.priceLabel}}</text>
+            <text class="addon-dot">·</text>
+            <text class="addon-basis">{{item.basisLabel}}</text>
+          </view>
+        </view>
+        <view class="stepper">
+          <view class="step" data-id="{{item._id}}" bindtap="onAddonDec">−</view>
+          <text class="qty">{{item.quantity}}</text>
+          <view class="step" data-id="{{item._id}}" bindtap="onAddonInc">+</view>
+        </view>
+      </view>
+    </view>
+
     <view class="card">
       <text class="section-title">{{sectionNotes}}</text>
       <textarea class="textarea" value="{{parentNotes}}" bindinput="onNotesInput" placeholder="{{fieldNotesPh}}" />
@@ -131,6 +151,7 @@
       <text class="section-title">{{sectionSummary}}</text>
       <view class="row"><text class="label flex">{{totalNightsLabel}}</text><text>{{nights}} {{nightsUnit}}</text></view>
       <view class="row"><text class="label flex">{{totalPetsLabel}}</text><text>{{selectedPets}} {{petsUnit}}</text></view>
+      <view wx:if="{{addonsSubtotal > 0}}" class="row"><text class="label flex">{{addonsSubtotalLabel}}</text><text>{{priceUnit}}{{addonsSubtotal}}</text></view>
       <view class="row total"><text class="label flex">{{totalPriceLabel}}</text><text class="price">{{priceUnit}}{{totalPrice}}</text></view>
     </view>
 

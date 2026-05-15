@@ -319,6 +319,32 @@ const zh = {
   owner_message_button: '与家长沟通',
   parent_message_button: '联系主人',
   profile_messages_link: '消息',
+
+  owner_manage_addons: '管理增值服务',
+  addons_title: '增值服务',
+  addons_empty: '还没有增值服务，点击右下角加号添加',
+  addons_inactive_chip: '已下架',
+  addons_basis_per_stay: '按订单一次性',
+  addons_basis_per_night: '按晚计费',
+  addon_edit_title_new: '新建增值服务',
+  addon_edit_title_edit: '编辑增值服务',
+  addon_field_name_zh: '名称（中文）',
+  addon_field_name_en: '名称（English）',
+  addon_field_desc_zh: '介绍（中文）',
+  addon_field_desc_en: '介绍（English）',
+  addon_field_price: '单价（元）',
+  addon_field_price_ph: '例如：50',
+  addon_field_basis: '计费方式',
+  addon_field_active: '上架显示',
+  addon_required: '请填写名称、单价与计费方式',
+  addon_delete_confirm: '确认删除该增值服务？历史订单保留快照，不受影响。',
+
+  booking_section_addons: '增值服务（可选）',
+  booking_addons_empty: '主人暂无可选的增值服务。',
+  booking_addons_basis_per_stay: '一次性',
+  booking_addons_basis_per_night: '按晚',
+  booking_addons_quantity: '数量',
+  booking_addons_subtotal: '增值服务',
 };
 
 export default zh;

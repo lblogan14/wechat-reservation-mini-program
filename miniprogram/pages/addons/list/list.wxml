@@ -1,0 +1,25 @@
+<view class="container">
+  <view class="header"><text class="title">{{titleText}}</text></view>
+
+  <block wx:if="{{notOwner}}">
+    <view class="empty"><text class="muted">{{notOwnerText}}</text></view>
+  </block>
+  <block wx:elif="{{!addons.length}}">
+    <view class="empty"><text class="muted">{{emptyText}}</text></view>
+  </block>
+  <block wx:else>
+    <view wx:for="{{addons}}" wx:key="_id" class="row" data-id="{{item._id}}" bindtap="onRowTap">
+      <view class="row-head">
+        <text class="name">{{item.displayName}}</text>
+        <text wx:if="{{item.showInactive}}" class="chip">{{inactiveLabel}}</text>
+      </view>
+      <view class="row-meta">
+        <text class="meta">{{item.priceLabel}}</text>
+        <text class="meta dot">·</text>
+        <text class="meta">{{item.basisLabel}}</text>
+      </view>
+    </view>
+  </block>
+
+  <button wx:if="{{!notOwner}}" class="fab" bindtap="onAddTap">+</button>
+</view>

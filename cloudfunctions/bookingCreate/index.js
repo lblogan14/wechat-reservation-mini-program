@@ -168,15 +168,50 @@ exports.main = async (event) => {
     }
   }
 
-  // 6. Insert template first, then instances pointing at it
+  // 6. Resolve add-ons (look up active catalog rows and freeze pricing into the booking)
+  let resolvedAddOns = [];
+  if (Array.isArray(event.addOns) && event.addOns.length) {
+    const requested = event.addOns
+      .filter((a) => a && a.addonId && typeof a.quantity === 'number' && a.quantity > 0)
+      .map((a) => ({ addonId: String(a.addonId), quantity: Math.floor(a.quantity) }));
+    if (requested.length) {
+      const ids = requested.map((a) => a.addonId);
+      const aRes = await db.collection('addons').where({ _id: _.in(ids), active: true }).get();
+      const aMap = new Map(aRes.data.map((a) => [a._id, a]));
+      for (const req of requested) {
+        const addon = aMap.get(req.addonId);
+        if (!addon) return { ok: false, error: `addon ${req.addonId} unavailable` };
+        resolvedAddOns.push({
+          addonId: addon._id,
+          nameZh: addon.nameZh,
+          nameEn: addon.nameEn,
+          unitPrice: addon.unitPrice,
+          quantity: req.quantity,
+          chargeBasis: addon.chargeBasis,
+        });
+      }
+    }
+  }
+
+  // 7. Insert template first, then instances pointing at it
   const now = Date.now();
   const pricePerNight = service.pricePerNight || 0;
+
+  const addonsCostFor = (nights) => {
+    let total = 0;
+    for (const a of resolvedAddOns) {
+      const mult = a.chargeBasis === 'per_night' ? nights : 1;
+      total += a.unitPrice * a.quantity * mult;
+    }
+    return total;
+  };
 
   const computeStay = (occ) => {
     const a = normalizeDate(occ.dropoffAt);
     const b = normalizeDate(occ.pickupAt);
     const nights = Math.max(1, Math.round((b - a) / DAY_MS));
-    return { nights, totalPrice: pricePerNight * nights * slots };
+    const stayCost = pricePerNight * nights * slots;
+    return { nights, totalPrice: stayCost + addonsCostFor(nights) };
   };
 
   const template = occurrences[0];
@@ -202,6 +237,9 @@ exports.main = async (event) => {
     nights: tStay.nights,
     totalPrice: tStay.totalPrice,
   };
+  if (resolvedAddOns.length) {
+    templateRow.addOns = resolvedAddOns;
+  }
   if (event.recurrence) {
     templateRow.recurrence = event.recurrence;
   }
@@ -223,6 +261,9 @@ exports.main = async (event) => {
         totalPrice: stay.totalPrice,
         parentBookingId: templateId,
       };
+      if (resolvedAddOns.length) {
+        row.addOns = resolvedAddOns;
+      }
       const insert = await db.collection('bookings').add({ data: row });
       createdIds.push(insert._id);
     }

@@ -1,0 +1,50 @@
+<view class="container">
+  <view class="header"><text class="title">{{title}}</text></view>
+
+  <block wx:if="{{notOwner}}">
+    <view class="card empty"><text class="muted">{{notOwnerText}}</text></view>
+  </block>
+
+  <block wx:else>
+    <view class="card">
+      <view class="field">
+        <text class="label">{{labels.nameZh}}</text>
+        <input class="input" value="{{addon.nameZh}}" bindinput="onNameZhInput" />
+      </view>
+      <view class="field">
+        <text class="label">{{labels.nameEn}}</text>
+        <input class="input" value="{{addon.nameEn}}" bindinput="onNameEnInput" />
+      </view>
+      <view class="field">
+        <text class="label">{{labels.descZh}}</text>
+        <textarea class="textarea" value="{{addon.descriptionZh}}" bindinput="onDescZhInput" />
+      </view>
+      <view class="field">
+        <text class="label">{{labels.descEn}}</text>
+        <textarea class="textarea" value="{{addon.descriptionEn}}" bindinput="onDescEnInput" />
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="field">
+        <text class="label">{{labels.price}}</text>
+        <input class="input" type="digit" value="{{priceInput}}" bindinput="onPriceInput" placeholder="{{placeholders.price}}" />
+      </view>
+      <view class="field">
+        <text class="label">{{labels.basis}}</text>
+        <picker class="picker" range="{{basisOptions}}" range-key="label" value="{{basisIndex}}" bindchange="onBasisChange">
+          <view class="picker-value">{{basisOptions[basisIndex].label}}</view>
+        </picker>
+      </view>
+      <view class="field row">
+        <text class="label">{{labels.active}}</text>
+        <switch checked="{{addon.active}}" bindchange="onActiveChange" />
+      </view>
+    </view>
+
+    <view class="actions">
+      <button class="primary" bindtap="onSave" disabled="{{saving}}">{{labels.save}}</button>
+      <button wx:if="{{addon._id}}" class="danger" bindtap="onDelete">{{labels.delete}}</button>
+    </view>
+  </block>
+</view>

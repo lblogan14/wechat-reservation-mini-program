@@ -321,6 +321,32 @@ const en: Dict = {
   owner_message_button: 'Message parent',
   parent_message_button: 'Message owner',
   profile_messages_link: 'Messages',
+
+  owner_manage_addons: 'Add-ons catalog',
+  addons_title: 'Add-ons',
+  addons_empty: 'No add-ons yet — tap + to add the first one',
+  addons_inactive_chip: 'Inactive',
+  addons_basis_per_stay: 'Per stay',
+  addons_basis_per_night: 'Per night',
+  addon_edit_title_new: 'New add-on',
+  addon_edit_title_edit: 'Edit add-on',
+  addon_field_name_zh: 'Name (中文)',
+  addon_field_name_en: 'Name (English)',
+  addon_field_desc_zh: 'Description (中文)',
+  addon_field_desc_en: 'Description (English)',
+  addon_field_price: 'Unit price (¥)',
+  addon_field_price_ph: 'e.g. 50',
+  addon_field_basis: 'Charge basis',
+  addon_field_active: 'Active',
+  addon_required: 'Name, unit price, and charge basis are required',
+  addon_delete_confirm: 'Delete this add-on? Past bookings keep their own frozen copy and are unaffected.',
+
+  booking_section_addons: 'Add-ons (optional)',
+  booking_addons_empty: 'No add-ons are configured yet.',
+  booking_addons_basis_per_stay: 'per stay',
+  booking_addons_basis_per_night: 'per night',
+  booking_addons_quantity: 'Qty',
+  booking_addons_subtotal: 'Add-ons',
 };
 
 export default en;

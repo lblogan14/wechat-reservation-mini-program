@@ -1,0 +1,67 @@
+.header { padding: 32rpx 0; }
+.title { font-size: 44rpx; font-weight: 600; }
+
+.empty {
+  padding: 96rpx 32rpx;
+  text-align: center;
+}
+
+.muted { color: #888; font-size: 26rpx; }
+
+.row {
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+}
+
+.row-head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.name {
+  flex: 1;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.chip {
+  font-size: 22rpx;
+  background-color: #f1f3f5;
+  color: #666;
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+}
+
+.row-meta {
+  display: flex;
+  flex-direction: row;
+  gap: 12rpx;
+  margin-top: 8rpx;
+  color: #666;
+}
+
+.meta { font-size: 26rpx; }
+.meta.dot { color: #ccc; }
+
+.fab {
+  position: fixed;
+  right: 32rpx;
+  bottom: 64rpx;
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background-color: #0d6efd;
+  color: #ffffff;
+  font-size: 48rpx;
+  font-weight: 300;
+  line-height: 96rpx;
+  text-align: center;
+  padding: 0;
+  border: none;
+  box-shadow: 0 8rpx 24rpx rgba(13, 110, 253, 0.4);
+}
+.fab::after { display: none; }

@@ -31,6 +31,7 @@
       <button class="secondary stack" bindtap="onEditDaycareTap">{{editDaycareLabel}}</button>
       <button class="secondary stack" bindtap="onManageServicesTap">{{manageServicesLabel}}</button>
       <button class="secondary stack" bindtap="onManageAvailabilityTap">{{manageAvailabilityLabel}}</button>
+      <button class="secondary stack" bindtap="onManageAddonsTap">{{manageAddonsLabel}}</button>
       <button class="secondary" bindtap="onManageWaitlistTap">{{manageWaitlistLabel}}</button>
     </view>
     <view wx:else class="section">

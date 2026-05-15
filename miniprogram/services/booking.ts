@@ -9,6 +9,7 @@ export interface BookingCreateArgs {
   agreementVersion: string;
   agreementAcceptedAt: number;
   recurrence?: PetDaycare.BookingRecurrence;
+  addOns?: Array<{ addonId: string; quantity: number }>;
 }
 
 export interface BookingCreateResult {

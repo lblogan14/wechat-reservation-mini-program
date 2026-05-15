@@ -5,6 +5,7 @@ import { petList } from '../../../services/pet';
 import { daycareGet } from '../../../services/daycare';
 import { bookingCreate } from '../../../services/booking';
 import { waitlistCreate } from '../../../services/waitlist';
+import { addonList } from '../../../services/addon';
 
 interface ServiceOption {
   value: string;
@@ -17,6 +18,17 @@ interface PetRow {
   name: string;
   speciesLabel: string;
   selected: boolean;
+}
+
+interface AddonRow {
+  _id: string;
+  name: string;
+  description: string;
+  unitPrice: number;
+  chargeBasis: 'per_stay' | 'per_night';
+  basisLabel: string;
+  priceLabel: string;
+  quantity: number;
 }
 
 interface DowChip {
@@ -134,11 +146,18 @@ Page({
     submitting: false,
     showHoursWarning: false,
     notSignedIn: false,
+    sectionAddons: '',
+    addonsEmptyText: '',
+    addonsQuantityLabel: '',
+    addonsSubtotalLabel: '',
+    addons: [] as AddonRow[],
+    addonsSubtotal: 0,
   },
 
   unsubscribe: undefined as (() => void) | undefined,
   services: [] as PetDaycare.Service[],
   config: null as PetDaycare.DaycareConfig | null,
+  addonsRaw: [] as PetDaycare.AddOn[],
 
   async onLoad(opts: Record<string, string | undefined>) {
     this.refreshStrings();
@@ -146,6 +165,7 @@ Page({
       this.refreshStrings();
       this.rebuildServiceOptions();
       this.rebuildDowChips();
+      this.rebuildAddons();
       this.applyAgreement();
       this.recomputeRecurrence();
     });
@@ -155,13 +175,15 @@ Page({
       return;
     }
 
-    const [services, pets, config] = await Promise.all([
+    const [services, pets, config, addons] = await Promise.all([
       serviceList(false),
       petList(),
       daycareGet(),
+      addonList(false),
     ]);
     this.services = services;
     this.config = config;
+    this.addonsRaw = addons;
 
     const presetServiceId = opts.serviceId;
     const presetDateTs = opts.date ? parseInt(opts.date, 10) : NaN;
@@ -186,6 +208,7 @@ Page({
     });
     this.rebuildServiceOptions();
     this.rebuildDowChips();
+    this.rebuildAddons();
     this.applyAgreement();
     this.recompute();
   },
@@ -238,7 +261,26 @@ Page({
         { value: 'weekly', label: t('recurrence_pattern_weekly') },
         { value: 'daily', label: t('recurrence_pattern_daily') },
       ],
+      sectionAddons: t('booking_section_addons'),
+      addonsEmptyText: t('booking_addons_empty'),
+      addonsQuantityLabel: t('booking_addons_quantity'),
+      addonsSubtotalLabel: t('booking_addons_subtotal'),
     });
+  },
+
+  rebuildAddons() {
+    const prev = new Map(this.data.addons.map((a) => [a._id, a.quantity]));
+    const rows: AddonRow[] = this.addonsRaw.map((a) => ({
+      _id: a._id!,
+      name: localized(a.nameZh, a.nameEn),
+      description: localized(a.descriptionZh, a.descriptionEn),
+      unitPrice: a.unitPrice,
+      chargeBasis: a.chargeBasis,
+      basisLabel: a.chargeBasis === 'per_night' ? t('booking_addons_basis_per_night') : t('booking_addons_basis_per_stay'),
+      priceLabel: `¥${a.unitPrice}`,
+      quantity: prev.get(a._id!) ?? 0,
+    }));
+    this.setData({ addons: rows });
   },
 
   rebuildServiceOptions() {
@@ -345,15 +387,38 @@ Page({
     this.recomputeRecurrence();
   },
 
+  onAddonInc(e: WechatMiniprogram.BaseEvent) {
+    const id = (e.currentTarget.dataset as { id: string }).id;
+    const addons = this.data.addons.map((a) => (a._id === id ? { ...a, quantity: a.quantity + 1 } : a));
+    this.setData({ addons });
+    this.recompute();
+  },
+
+  onAddonDec(e: WechatMiniprogram.BaseEvent) {
+    const id = (e.currentTarget.dataset as { id: string }).id;
+    const addons = this.data.addons.map((a) =>
+      a._id === id ? { ...a, quantity: Math.max(0, a.quantity - 1) } : a,
+    );
+    this.setData({ addons });
+    this.recompute();
+  },
+
   recompute() {
-    const { dropoffDateStr, pickupDateStr, dropoffTimeStr, pickupTimeStr, pets, serviceIndex, serviceOptions } = this.data;
+    const { dropoffDateStr, pickupDateStr, dropoffTimeStr, pickupTimeStr, pets, serviceIndex, serviceOptions, addons } = this.data;
     const cfg = this.config;
     const dropoffDay = parseDateUTC(dropoffDateStr);
     const pickupDay = parseDateUTC(pickupDateStr);
     const nights = Math.max(0, Math.round((pickupDay - dropoffDay) / DAY_MS));
     const selectedPets = pets.filter((p) => p.selected).length;
     const service = serviceOptions[serviceIndex];
-    const totalPrice = service ? nights * service.pricePerNight * selectedPets : 0;
+    const stayCost = service ? nights * service.pricePerNight * selectedPets : 0;
+    let addonsSubtotal = 0;
+    for (const a of addons) {
+      if (!a.quantity) continue;
+      const mult = a.chargeBasis === 'per_night' ? nights : 1;
+      addonsSubtotal += a.unitPrice * a.quantity * mult;
+    }
+    const totalPrice = stayCost + addonsSubtotal;
 
     let showHoursWarning = false;
     if (cfg && cfg.hoursOpen && cfg.hoursClose && dropoffTimeStr && pickupTimeStr) {
@@ -364,7 +429,7 @@ Page({
       }
     }
 
-    this.setData({ nights, selectedPets, totalPrice, showHoursWarning });
+    this.setData({ nights, selectedPets, totalPrice, addonsSubtotal, showHoursWarning });
     this.recomputeRecurrence();
   },
 
@@ -399,7 +464,7 @@ Page({
   async onSubmit() {
     if (this.data.submitting) return;
 
-    const { dropoffDateStr, dropoffTimeStr, pickupDateStr, pickupTimeStr, pets, serviceIndex, serviceOptions, parentNotes, agreed, hasAgreement, agreementVersion, recurEnabled, recurPatternOptions, recurPatternIndex, recurDowChips, recurEndsAtStr, recurInvalid } = this.data;
+    const { dropoffDateStr, dropoffTimeStr, pickupDateStr, pickupTimeStr, pets, serviceIndex, serviceOptions, parentNotes, agreed, hasAgreement, agreementVersion, recurEnabled, recurPatternOptions, recurPatternIndex, recurDowChips, recurEndsAtStr, recurInvalid, addons } = this.data;
     const dropoffAt = combine(dropoffDateStr, dropoffTimeStr);
     const pickupAt = combine(pickupDateStr, pickupTimeStr);
     if (!dropoffAt || !pickupAt || pickupAt <= dropoffAt) {
@@ -441,6 +506,10 @@ Page({
       }
     }
 
+    const selectedAddOns = addons
+      .filter((a) => a.quantity > 0)
+      .map((a) => ({ addonId: a._id, quantity: a.quantity }));
+
     this.setData({ submitting: true });
     const res = await bookingCreate({
       serviceId: service.value,
@@ -451,6 +520,7 @@ Page({
       agreementVersion: hasAgreement ? agreementVersion : 'no-agreement-v0',
       agreementAcceptedAt: Date.now(),
       recurrence,
+      addOns: selectedAddOns.length ? selectedAddOns : undefined,
     });
     this.setData({ submitting: false });
 

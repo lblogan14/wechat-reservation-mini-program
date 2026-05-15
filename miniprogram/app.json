@@ -16,7 +16,9 @@
     "pages/waitlist/queue/queue",
     "pages/dashboard/dashboard",
     "pages/messages/list/list",
-    "pages/messages/thread/thread"
+    "pages/messages/thread/thread",
+    "pages/addons/list/list",
+    "pages/addons/edit/edit"
   ],
   "window": {
     "backgroundTextStyle": "light",

@@ -1,0 +1,9 @@
+{
+  "name": "addonDelete",
+  "version": "1.0.0",
+  "description": "Hard-delete an add-on. Owner role required. Bookings embed their own copy, so this is safe.",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.0"
+  }
+}

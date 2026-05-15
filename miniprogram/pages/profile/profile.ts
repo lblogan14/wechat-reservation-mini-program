@@ -21,6 +21,7 @@ Page({
     manageServicesLabel: '',
     manageAvailabilityLabel: '',
     manageWaitlistLabel: '',
+    manageAddonsLabel: '',
     dashboardLabel: '',
     messagesLabel: '',
     unreadCount: 0,
@@ -67,6 +68,7 @@ Page({
       manageServicesLabel: t('owner_manage_services'),
       manageAvailabilityLabel: t('owner_manage_availability'),
       manageWaitlistLabel: t('owner_manage_waitlist'),
+      manageAddonsLabel: t('owner_manage_addons'),
       dashboardLabel: t('owner_dashboard'),
       messagesLabel: t('profile_messages_link'),
       promoteTitle: t('owner_promote_title'),
@@ -140,6 +142,10 @@ Page({
 
   onManageWaitlistTap() {
     wx.navigateTo({ url: '/pages/waitlist/queue/queue' });
+  },
+
+  onManageAddonsTap() {
+    wx.navigateTo({ url: '/pages/addons/list/list' });
   },
 
   onDashboardTap() {

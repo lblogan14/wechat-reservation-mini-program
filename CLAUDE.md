@@ -4,21 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-v0.11 landed on 2026-05-14 (2-way messaging). The repo now provides:
+v0.12 landed on 2026-05-14 (service add-ons catalog). The repo now provides:
 
 - Project shell + bilingual zh/en i18n + locale-reactive tab bar
 - Sign-in flow + cached User with `role`
 - Pet profile CRUD, daycare identity, services + availability (v0.4)
 - Availability calendar (v0.5) — `capacityRange` is the single source of truth for remaining slots
 - Booking creation flow (v0.6) + recurring bookings (v0.7)
-- My bookings (v0.8): parent list + detail with cancel single + cancel-series
-- Waitlist (v0.9): capacity-blocked → "Join waitlist" modal; owner queue with Promote-to-Booking
+- My bookings (v0.8) + waitlist (v0.9)
 - Owner dashboard (v0.10): today's drop-offs / pick-ups / staying; booking detail picks up an owner panel for status + payment
-- **2-way messaging** (v0.11): one thread per booking, auto-created on first message. Booking detail page has a "Message owner / Message parent" button that calls `messageThreadEnsure` then navigates to `pages/messages/thread/?id=X`. Thread view shows messages chronologically with bubbles (mine = blue right, theirs = white left) and polls every 10s while open via `setInterval`. Threads list at `pages/messages/list/` reachable from a new "Messages" link on the profile tab; parent sees own threads, owner sees all (scope:'all'). Tab bar badge on the profile tab shows total unread count (≤99 + "99+" overflow) and refreshes on profile `onShow` after `refreshCurrentUser`. **Pre-booking inquiry threads deferred** — every thread requires a `bookingId`.
+- 2-way messaging (v0.11): one thread per booking, 10s polling, profile tab unread badge
+- **Service add-ons** (v0.12): `addons` catalog (owner CRUD via `pages/addons/list/` + `pages/addons/edit/`), each with `unitPrice` + `chargeBasis: 'per_stay' | 'per_night'`. The booking form picks up an optional Add-ons section between Pets and Notes — each active addon shows name/description/price/basis with a quantity stepper. `bookingCreate` accepts `addOns: [{ addonId, quantity }]`, resolves each against the live catalog, and embeds a frozen `BookingAddOn` array on every booking row (template + recurring instances) so the booking keeps its own copy of pricing. Hard-delete from the catalog is safe — historical bookings are unaffected. Add-on cost is folded into `totalPrice`: `per_stay = unitPrice * quantity`; `per_night = unitPrice * quantity * nights`. Pricing is per-booking, not per-pet.
 - Three tabs: 首页 / 我的宠物 / 我的, all bilingual-aware
-- Twenty-nine cloud functions (+5 from v0.10): adds `messageThreadList`, `messageList`, `messageSend`, `messageMarkRead`, `messageThreadEnsure`
+- Thirty-two cloud functions (+3 from v0.11): adds `addonList`, `addonUpsert`, `addonDelete`
 
-Not yet implemented: add-ons UI (#11), subscribe-message reminders (#12), walk-in manual entry, pre-booking inquiry threads. See **v1 backlog**.
+Not yet implemented: subscribe-message reminders (#12), walk-in manual entry, pre-booking inquiry threads. See **v1 backlog**.
 
 ## v0.6 decisions doc
 
@@ -76,6 +76,16 @@ Reasonable defaults baked into the booking flow — flag any that need changing:
 - **Message body**: text-only in v0.11. Schema supports `attachmentFileID` but the composer doesn't yet upload images; the thread view renders an `<image>` if a message has one. Adding image upload to the composer is ~30 lines whenever it's wanted.
 - **Auto-mark-read on open**: when a parent opens a thread, all messages from the owner are marked read. Same in reverse. No "unread until visible" granularity (e.g., scrolling past).
 
+## v0.12 add-ons decisions
+
+- **Per-booking, not per-pet**: an addon's quantity multiplies its unit price by the chargeBasis multiplier (nights for `per_night`, 1 for `per_stay`). The same addon with quantity=2 means "I want 2 of this thing for this booking" — not "2 per pet." If the owner needs per-pet scaling, instruct the parent to set quantity = petCount.
+- **Frozen at booking time**: `bookingCreate` resolves each `addonId` against the live catalog and embeds the full `BookingAddOn` snapshot (`addonId`, `nameZh`, `nameEn`, `unitPrice`, `quantity`, `chargeBasis`) onto every booking row in the series. This is why `addonDelete` is a safe hard delete — historical bookings still display correctly.
+- **Active filter**: only `active: true` addons appear in the booking form. Catalog list (owner side) shows both active and inactive with a chip. Inactive addons that were embedded on past bookings keep their data — they just stop appearing as new options.
+- **Recurring bookings get the same addons**: every instance in the series carries the same `addOns` array; the per-night cost is recomputed per instance based on that instance's `nights`.
+- **Charge basis**: only `per_stay` and `per_night`. No "per-pet" basis. Owner expresses "per pet" needs by telling parents to bump the quantity.
+- **Pricing UI**: stepper (+/−) per addon, quantity defaults to 0. Tapping − below 0 stays at 0. No cap (owner trusts parent input; server hard-cap is implicit via `Math.floor` + price field).
+- **Summary section**: when add-on subtotal > 0, an extra row appears between Pets and Total showing the add-on subtotal (¥N). The grand total at the bottom always reflects stay cost + add-on cost.
+
 ## Product goal
 
 A WeChat Mini Program that lets pet owners book appointments at pet daycare homes — view available time slots, select services, and confirm appointments inside the WeChat client. See [README.md](README.md) for the full pitch (bilingual: English + 中文).
@@ -94,8 +104,8 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 2. **Install dev dependencies:** `npm install` at the repo root. This installs `miniprogram-api-typings` (TS types for `wx.*`) and `typescript`. Run `npm run typecheck` to type-check without emitting.
 3. **Open 微信开发者工具** (download: https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html). Import this repo directory; the IDE picks up [project.config.json](project.config.json) automatically and detects the TS source.
 4. **Create a 云开发 environment:** in the IDE, open the 云开发 panel → 新建环境. Copy the env ID into [miniprogram/app.ts](miniprogram/app.ts) at the `// TODO: replace with your 云开发 env ID` comment.
-5. **Create database collections** in the 云开发 console (the SDK does not auto-create them). For v0.11: `users` + `pets` + `daycareConfig` + `services` + `availabilityOverrides` + `bookings` + `waitlistEntries` + `messageThreads` + `messages`. Future milestones will add `addons`.
-6. **Deploy cloud functions:** for each folder under [cloudfunctions/](cloudfunctions/), right-click in the IDE → *上传并部署：云端安装依赖（不上传 node_modules）*. The IDE handles `npm install` server-side. Current functions: `login`, `userGet`, `userPromote`, `petList`, `petUpsert`, `petDelete`, `daycareGet`, `daycareUpsert`, `serviceList`, `serviceUpsert`, `serviceDelete`, `availabilityList`, `availabilityUpsert`, `availabilityDelete`, `capacityRange`, `bookingCreate`, `bookingList`, `bookingCancel`, `bookingStatusUpdate`, `bookingPaymentUpdate`, `waitlistCreate`, `waitlistList`, `waitlistCancel`, `waitlistPromote`, `messageThreadList`, `messageList`, `messageSend`, `messageMarkRead`, `messageThreadEnsure`.
+5. **Create database collections** in the 云开发 console (the SDK does not auto-create them). For v0.12: `users` + `pets` + `daycareConfig` + `services` + `availabilityOverrides` + `bookings` + `waitlistEntries` + `messageThreads` + `messages` + `addons`. All v1 collections are now in place.
+6. **Deploy cloud functions:** for each folder under [cloudfunctions/](cloudfunctions/), right-click in the IDE → *上传并部署：云端安装依赖（不上传 node_modules）*. The IDE handles `npm install` server-side. Current functions: `login`, `userGet`, `userPromote`, `petList`, `petUpsert`, `petDelete`, `daycareGet`, `daycareUpsert`, `serviceList`, `serviceUpsert`, `serviceDelete`, `availabilityList`, `availabilityUpsert`, `availabilityDelete`, `capacityRange`, `bookingCreate`, `bookingList`, `bookingCancel`, `bookingStatusUpdate`, `bookingPaymentUpdate`, `waitlistCreate`, `waitlistList`, `waitlistCancel`, `waitlistPromote`, `messageThreadList`, `messageList`, `messageSend`, `messageMarkRead`, `messageThreadEnsure`, `addonList`, `addonUpsert`, `addonDelete`.
    - For `userPromote`, also set a `BOOTSTRAP_OWNER_CODE` environment variable on the cloud function (cloud-function panel → 环境变量). The first parent uses that code in the profile page's "Promote to owner" form to flip their `User.role` to `'owner'`. Without the env var, the function refuses all promotions.
 7. **Preview:** click *预览* in the IDE to generate a QR code, scan with WeChat. Or run in the simulator.
 
@@ -125,6 +135,8 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 │   │   ├── dashboard/                 # subpage: owner-only today view (drop-offs / pick-ups / staying)
 │   │   ├── messages/list/             # subpage: list of message threads (parent own; owner all)
 │   │   ├── messages/thread/           # subpage: chat view for a single thread; polls every 10s
+│   │   ├── addons/list/               # subpage: owner-only addon catalog
+│   │   ├── addons/edit/               # subpage: owner-only addon form
 │   │   └── profile/                   # "me" tab — sign-in + owner tools + language switcher
 │   ├── components/
 │   │   ├── lang-switcher/             # zh/en toggle
@@ -141,7 +153,8 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 │   │   ├── capacity.ts                # capacityRange — per-day remaining slots for a service
 │   │   ├── booking.ts                 # bookingCreate / bookingList / bookingCancel / bookingStatusUpdate / bookingPaymentUpdate
 │   │   ├── waitlist.ts                # waitlistCreate / waitlistList / waitlistCancel / waitlistPromote
-│   │   └── message.ts                 # messageThreadList / messageList / messageSend / messageMarkRead / messageThreadEnsure / totalUnreadFor
+│   │   ├── message.ts                 # messageThreadList / messageList / messageSend / messageMarkRead / messageThreadEnsure / totalUnreadFor
+│   │   └── addon.ts                   # addonList / addonUpsert / addonDelete
 │   ├── i18n/
 │   │   ├── index.ts                   # locale store + t()
 │   │   ├── zh.ts                      # source-of-truth dictionary (other locales conform to its shape)
@@ -177,7 +190,10 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 │   ├── messageList/                   # list all messages in a thread
 │   ├── messageSend/                   # send a message; auto-creates thread for a bookingId
 │   ├── messageMarkRead/               # mark all unread messages in a thread read for caller's role
-│   └── messageThreadEnsure/           # find or create thread for a booking (open chat without sending)
+│   ├── messageThreadEnsure/           # find or create thread for a booking (open chat without sending)
+│   ├── addonList/                     # list addons (active by default; includeInactive for owner views)
+│   ├── addonUpsert/                   # create or update an addon — owner only
+│   └── addonDelete/                   # hard-delete an addon — owner only (safe; bookings keep frozen copies)
 ├── project.config.json                # IDE-level config (AppID goes here)
 ├── sitemap.json
 └── package.json                       # dev-only: api-typings + typescript
@@ -218,7 +234,7 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 8. ~~My bookings (pet parent)~~ — landed in v0.8. `pages/bookings/list/` (grouped Upcoming / Past / Cancelled + inline Waitlist) + `pages/bookings/detail/` (cancel single + cancel-series). No cancel-policy lead-time enforcement in v1; the daycare's `cancelPolicyZh/En` is shown for expectations only.
 9. ~~Owner dashboard~~ — landed in v0.10. Today view (`pages/dashboard/`) with inline check-in / check-out / no-show actions; owner panel on the booking detail page handles payment status + note. Walk-in manual entry deferred to v1.x (would require an owner-side variant of the booking form that lets the owner pick any parent's pets). Calendar block-out and waitlist queue already accessible from owner-tools.
 10. ~~2-way messaging parent ↔ owner~~ — landed in v0.11. `messageThreads` + `messages` collections; one thread per booking auto-created on first message via `messageThreadEnsure`. 10s polling while thread is open. Tab bar badge on profile tab refreshes on profile `onShow`. Pre-booking inquiry threads deferred.
-11. **Service add-ons catalog** — `addons` collection (grooming, extra walks, medication admin). Embedded into `Booking.addOns` at booking time so historical pricing is preserved.
+11. ~~Service add-ons catalog~~ — landed in v0.12. `addons` collection + owner CRUD pages + booking form section. `bookingCreate` freezes a `BookingAddOn` snapshot onto each booking row so deletes from the catalog don't break history.
 12. **Subscribe-message reminders** — 24h before drop-off, day-of pick-up, payment due. Requires the user to grant `wx.requestSubscribeMessage` permission at booking time.
 13. **v2 delighters:** daily photo updates, vaccine cert OCR with expiry warnings, multi-pet sibling discount, post-stay report card, repeat-customer points, prepay credit packs (once WeChat Pay is unlocked by 企业认证).
 
