@@ -60,13 +60,25 @@ Page({
         agreementZh: t('daycare_field_agreement_zh'),
         agreementEn: t('daycare_field_agreement_en'),
         agreementVersion: t('daycare_field_agreement_version'),
+        reminderSection: t('reminder_section'),
+        reminderDropoff: t('reminder_field_dropoff_tmpl_id'),
+        reminderPickup: t('reminder_field_pickup_tmpl_id'),
         save: t('pet_save'),
       },
       placeholders: {
         agreementVersion: t('daycare_field_agreement_version_ph'),
         pickTime: t('pick_date'),
+        reminderTmplId: t('reminder_field_tmpl_id_ph'),
       },
     });
+  },
+
+  onReminderDropoffInput(e: WechatMiniprogram.Input) {
+    this.setData({ 'config.reminderDropoffTmplId': e.detail.value });
+  },
+
+  onReminderPickupInput(e: WechatMiniprogram.Input) {
+    this.setData({ 'config.reminderPickupTmplId': e.detail.value });
   },
 
   onNameZhInput(e: WechatMiniprogram.Input) {

@@ -562,6 +562,19 @@ Page({
       ? fmtTpl(t('recurrence_create_success'), { n: res.occurrences! })
       : t('booking_create_success');
     wx.showToast({ title: successMsg, icon: 'success' });
+
+    // Ask permission for subscribe-message reminders if templates are configured.
+    // Both successes and failures here are non-blocking — the booking is already created.
+    const tmplIds = [
+      this.config?.reminderDropoffTmplId,
+      this.config?.reminderPickupTmplId,
+    ].filter((id): id is string => !!id && id.length >= 10);
+    if (tmplIds.length) {
+      wx.requestSubscribeMessage({ tmplIds }).catch((err) => {
+        console.warn('[booking] requestSubscribeMessage:', err);
+      });
+    }
+
     setTimeout(() => wx.navigateBack(), 800);
   },
 });

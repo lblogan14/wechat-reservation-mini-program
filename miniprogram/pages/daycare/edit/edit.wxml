@@ -76,6 +76,18 @@
       </view>
     </view>
 
+    <view class="card">
+      <text class="section-label">{{labels.reminderSection}}</text>
+      <view class="field">
+        <text class="label">{{labels.reminderDropoff}}</text>
+        <input class="input" value="{{config.reminderDropoffTmplId}}" bindinput="onReminderDropoffInput" placeholder="{{placeholders.reminderTmplId}}" />
+      </view>
+      <view class="field">
+        <text class="label">{{labels.reminderPickup}}</text>
+        <input class="input" value="{{config.reminderPickupTmplId}}" bindinput="onReminderPickupInput" placeholder="{{placeholders.reminderTmplId}}" />
+      </view>
+    </view>
+
     <view class="actions">
       <button class="primary" bindtap="onSave" disabled="{{saving}}">{{labels.save}}</button>
     </view>

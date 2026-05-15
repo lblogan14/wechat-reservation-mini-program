@@ -347,6 +347,11 @@ const en: Dict = {
   booking_addons_basis_per_night: 'per night',
   booking_addons_quantity: 'Qty',
   booking_addons_subtotal: 'Add-ons',
+
+  reminder_section: 'Subscribe-message reminders',
+  reminder_field_dropoff_tmpl_id: 'Drop-off reminder template ID',
+  reminder_field_pickup_tmpl_id: 'Pick-up reminder template ID',
+  reminder_field_tmpl_id_ph: 'Paste the 25-char ID from 公众平台 subscribe templates',
 };
 
 export default en;

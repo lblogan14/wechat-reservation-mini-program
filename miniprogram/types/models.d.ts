@@ -112,6 +112,9 @@ declare namespace PetDaycare {
     // Recurring stays: if set, this row is the template; per-instance rows reference it.
     recurrence?: BookingRecurrence;
     parentBookingId?: string;
+    // Subscribe-message idempotency flags — set true after the matching reminder fires.
+    reminderSentDropoff?: boolean;
+    reminderSentPickup?: boolean;
     createdAt: number;
     updatedAt: number;
   }
@@ -131,6 +134,11 @@ declare namespace PetDaycare {
     agreementZh?: string;
     agreementEn?: string;
     agreementVersion?: string;
+    // Subscribe-message template IDs registered in 微信公众平台.
+    // Format: '<25-char template ID>'. The booking form requests permission for these at submit
+    // time; the daily `sendReminders` cloud function uses them to fire the actual messages.
+    reminderDropoffTmplId?: string;
+    reminderPickupTmplId?: string;
     updatedAt: number;
   }
 

@@ -4,21 +4,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-v0.12 landed on 2026-05-14 (service add-ons catalog). The repo now provides:
+v0.13 landed on 2026-05-14 (subscribe-message reminders). All 12 v1 milestones from the original backlog are now coded; v2 delighters (#13) remain.
 
 - Project shell + bilingual zh/en i18n + locale-reactive tab bar
 - Sign-in flow + cached User with `role`
 - Pet profile CRUD, daycare identity, services + availability (v0.4)
-- Availability calendar (v0.5) — `capacityRange` is the single source of truth for remaining slots
+- Availability calendar (v0.5)
 - Booking creation flow (v0.6) + recurring bookings (v0.7)
 - My bookings (v0.8) + waitlist (v0.9)
-- Owner dashboard (v0.10): today's drop-offs / pick-ups / staying; booking detail picks up an owner panel for status + payment
-- 2-way messaging (v0.11): one thread per booking, 10s polling, profile tab unread badge
-- **Service add-ons** (v0.12): `addons` catalog (owner CRUD via `pages/addons/list/` + `pages/addons/edit/`), each with `unitPrice` + `chargeBasis: 'per_stay' | 'per_night'`. The booking form picks up an optional Add-ons section between Pets and Notes — each active addon shows name/description/price/basis with a quantity stepper. `bookingCreate` accepts `addOns: [{ addonId, quantity }]`, resolves each against the live catalog, and embeds a frozen `BookingAddOn` array on every booking row (template + recurring instances) so the booking keeps its own copy of pricing. Hard-delete from the catalog is safe — historical bookings are unaffected. Add-on cost is folded into `totalPrice`: `per_stay = unitPrice * quantity`; `per_night = unitPrice * quantity * nights`. Pricing is per-booking, not per-pet.
+- Owner dashboard (v0.10)
+- 2-way messaging (v0.11)
+- Service add-ons (v0.12): `addons` catalog + booking form integration; frozen `BookingAddOn` snapshots on every booking
+- **Subscribe-message reminders** (v0.13): daily timer-triggered `sendReminders` cloud function fires 24h drop-off + day-of pick-up reminders via `cloud.openapi.subscribeMessage.send`. Idempotent: each booking carries `reminderSentDropoff` / `reminderSentPickup` flags. Owner stores two template IDs (drop-off, pick-up) in `daycareConfig` via a new section on the daycare edit page. Booking submit calls `wx.requestSubscribeMessage` with the configured tmpl IDs so the parent grants permission. **Requires user setup**: register two templates in 微信公众平台 → 订阅消息 (one for 24h drop-off reminder, one for pick-up day) and paste IDs in. Without templates configured, `sendReminders` returns early and the booking form skips the permission prompt. Payment-due reminder deferred (no clear billing trigger in v1).
 - Three tabs: 首页 / 我的宠物 / 我的, all bilingual-aware
-- Thirty-two cloud functions (+3 from v0.11): adds `addonList`, `addonUpsert`, `addonDelete`
+- Thirty-three cloud functions (+1 from v0.12): adds `sendReminders`
 
-Not yet implemented: subscribe-message reminders (#12), walk-in manual entry, pre-booking inquiry threads. See **v1 backlog**.
+Not yet implemented: walk-in manual entry, pre-booking inquiry threads, payment-due reminder, v2 delighters (#13).
 
 ## v0.6 decisions doc
 
@@ -86,6 +87,26 @@ Reasonable defaults baked into the booking flow — flag any that need changing:
 - **Pricing UI**: stepper (+/−) per addon, quantity defaults to 0. Tapping − below 0 stays at 0. No cap (owner trusts parent input; server hard-cap is implicit via `Math.floor` + price field).
 - **Summary section**: when add-on subtotal > 0, an extra row appears between Pets and Total showing the add-on subtotal (¥N). The grand total at the bottom always reflects stay cost + add-on cost.
 
+## v0.13 reminders decisions + setup
+
+**Setup steps for the owner (one-time, in 微信公众平台 → 功能 → 订阅消息):**
+
+1. Pick two long-term subscribe message templates: one for "drop-off reminder" (24h before), one for "pick-up reminder" (day of). Each has 4–5 fields. The cloud function fills these slots: `thing1` (daycare name), `thing2` (pet names, comma-joined), `thing3` (service name), `date4` (drop-off OR pick-up date+time), `thing5` (a short hint string). You can rearrange field meanings in your template — just keep the same key names, or edit `buildData` in `cloudfunctions/sendReminders/index.js` to match your template.
+2. Copy each 25-character template ID into the daycare edit page → "Subscribe-message reminders" section. Save.
+3. Deploy `sendReminders` cloud function. It registers a daily timer trigger (cron `0 0 1 * * * *` = 01:00 UTC = 09:00 CST). The 公众平台 还需要把 `subscribeMessage.send` 加到 cloud function 权限列表（已写在 `cloudfunctions/sendReminders/config.json`）。
+4. After the next booking, the parent will see a WeChat-native modal asking them to allow up to N reminders.
+
+**Behavior decisions:**
+
+- **Daily timer**: cron `0 0 1 * * * *` = once daily at 01:00 UTC (= 09:00 CST). Drop-off reminders fire ~24h ahead because they run the day before the dropoff day starts; pick-up reminders fire on the morning of pick-up. The owner can change the cadence in `cloudfunctions/sendReminders/config.json`.
+- **Idempotent**: each booking carries `reminderSentDropoff` / `reminderSentPickup` flags. The trigger updates these to `true` on a successful send, so re-runs of the timer (manual + scheduled) don't double-send.
+- **Permission grant**: `wx.requestSubscribeMessage` is called once per booking submit. WeChat's API is "consumable one-at-a-time" — each `subscribeMessage.send` call burns one grant. If the user runs out, the send call errors and we just log it. For a typical 1-night booking, asking for 2 grants (drop-off + pick-up) at booking time covers exactly the right number.
+- **Skip when no templates**: if `daycareConfig.reminderDropoffTmplId` and `reminderPickupTmplId` are both empty, the booking form skips the permission popup and `sendReminders` no-ops with a "no template IDs configured" reason. So the app works fine without setup; reminders just don't fire.
+- **Active-statuses only**: `sendReminders` only sends for bookings with status `confirmed` or `checked_in`. Cancelled / no-show / checked_out are skipped.
+- **Field-mapping caveat**: WeChat enforces strict per-field length (≈ 20 chars) + character restrictions. `buildData` slices to 20 chars defensively. If the user's template fields are named differently (e.g., `time4` not `date4`), edit `buildData` rather than reshaping templates.
+- **Payment-due reminder deferred**: there's no billing lifecycle in v1 (no WeChat Pay). A "your payment is overdue" reminder needs a clear trigger (e.g., 7 days after checkout with paymentStatus still 'pending'). Punted — can be added as a third arm of `sendReminders` later.
+- **Timezone**: cron is UTC. CST is UTC+8. 01:00 UTC = 09:00 CST runs **once per Beijing morning**, which is the right semantic for "tomorrow" / "today" date keys (stored as UTC start-of-day).
+
 ## Product goal
 
 A WeChat Mini Program that lets pet owners book appointments at pet daycare homes — view available time slots, select services, and confirm appointments inside the WeChat client. See [README.md](README.md) for the full pitch (bilingual: English + 中文).
@@ -104,9 +125,10 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 2. **Install dev dependencies:** `npm install` at the repo root. This installs `miniprogram-api-typings` (TS types for `wx.*`) and `typescript`. Run `npm run typecheck` to type-check without emitting.
 3. **Open 微信开发者工具** (download: https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html). Import this repo directory; the IDE picks up [project.config.json](project.config.json) automatically and detects the TS source.
 4. **Create a 云开发 environment:** in the IDE, open the 云开发 panel → 新建环境. Copy the env ID into [miniprogram/app.ts](miniprogram/app.ts) at the `// TODO: replace with your 云开发 env ID` comment.
-5. **Create database collections** in the 云开发 console (the SDK does not auto-create them). For v0.12: `users` + `pets` + `daycareConfig` + `services` + `availabilityOverrides` + `bookings` + `waitlistEntries` + `messageThreads` + `messages` + `addons`. All v1 collections are now in place.
-6. **Deploy cloud functions:** for each folder under [cloudfunctions/](cloudfunctions/), right-click in the IDE → *上传并部署：云端安装依赖（不上传 node_modules）*. The IDE handles `npm install` server-side. Current functions: `login`, `userGet`, `userPromote`, `petList`, `petUpsert`, `petDelete`, `daycareGet`, `daycareUpsert`, `serviceList`, `serviceUpsert`, `serviceDelete`, `availabilityList`, `availabilityUpsert`, `availabilityDelete`, `capacityRange`, `bookingCreate`, `bookingList`, `bookingCancel`, `bookingStatusUpdate`, `bookingPaymentUpdate`, `waitlistCreate`, `waitlistList`, `waitlistCancel`, `waitlistPromote`, `messageThreadList`, `messageList`, `messageSend`, `messageMarkRead`, `messageThreadEnsure`, `addonList`, `addonUpsert`, `addonDelete`.
+5. **Create database collections** in the 云开发 console (the SDK does not auto-create them). For v0.13: `users` + `pets` + `daycareConfig` + `services` + `availabilityOverrides` + `bookings` + `waitlistEntries` + `messageThreads` + `messages` + `addons`. All v1 collections are now in place.
+6. **Deploy cloud functions:** for each folder under [cloudfunctions/](cloudfunctions/), right-click in the IDE → *上传并部署：云端安装依赖（不上传 node_modules）*. The IDE handles `npm install` server-side. Current functions: `login`, `userGet`, `userPromote`, `petList`, `petUpsert`, `petDelete`, `daycareGet`, `daycareUpsert`, `serviceList`, `serviceUpsert`, `serviceDelete`, `availabilityList`, `availabilityUpsert`, `availabilityDelete`, `capacityRange`, `bookingCreate`, `bookingList`, `bookingCancel`, `bookingStatusUpdate`, `bookingPaymentUpdate`, `waitlistCreate`, `waitlistList`, `waitlistCancel`, `waitlistPromote`, `messageThreadList`, `messageList`, `messageSend`, `messageMarkRead`, `messageThreadEnsure`, `addonList`, `addonUpsert`, `addonDelete`, `sendReminders`.
    - For `userPromote`, also set a `BOOTSTRAP_OWNER_CODE` environment variable on the cloud function (cloud-function panel → 环境变量). The first parent uses that code in the profile page's "Promote to owner" form to flip their `User.role` to `'owner'`. Without the env var, the function refuses all promotions.
+   - For `sendReminders`, deploy normally — the daily timer trigger is declared in its `config.json`. See **v0.13 reminders decisions + setup** above for the 微信公众平台 template setup that's required before reminders actually fire.
 7. **Preview:** click *预览* in the IDE to generate a QR code, scan with WeChat. Or run in the simulator.
 
 ## Project layout
@@ -193,7 +215,8 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 │   ├── messageThreadEnsure/           # find or create thread for a booking (open chat without sending)
 │   ├── addonList/                     # list addons (active by default; includeInactive for owner views)
 │   ├── addonUpsert/                   # create or update an addon — owner only
-│   └── addonDelete/                   # hard-delete an addon — owner only (safe; bookings keep frozen copies)
+│   ├── addonDelete/                   # hard-delete an addon — owner only (safe; bookings keep frozen copies)
+│   └── sendReminders/                 # daily timer (01:00 UTC): fire 24h drop-off + day-of pick-up subscribe-message reminders
 ├── project.config.json                # IDE-level config (AppID goes here)
 ├── sitemap.json
 └── package.json                       # dev-only: api-typings + typescript
@@ -235,7 +258,7 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 9. ~~Owner dashboard~~ — landed in v0.10. Today view (`pages/dashboard/`) with inline check-in / check-out / no-show actions; owner panel on the booking detail page handles payment status + note. Walk-in manual entry deferred to v1.x (would require an owner-side variant of the booking form that lets the owner pick any parent's pets). Calendar block-out and waitlist queue already accessible from owner-tools.
 10. ~~2-way messaging parent ↔ owner~~ — landed in v0.11. `messageThreads` + `messages` collections; one thread per booking auto-created on first message via `messageThreadEnsure`. 10s polling while thread is open. Tab bar badge on profile tab refreshes on profile `onShow`. Pre-booking inquiry threads deferred.
 11. ~~Service add-ons catalog~~ — landed in v0.12. `addons` collection + owner CRUD pages + booking form section. `bookingCreate` freezes a `BookingAddOn` snapshot onto each booking row so deletes from the catalog don't break history.
-12. **Subscribe-message reminders** — 24h before drop-off, day-of pick-up, payment due. Requires the user to grant `wx.requestSubscribeMessage` permission at booking time.
+12. ~~Subscribe-message reminders~~ — landed in v0.13. `sendReminders` daily timer + `wx.requestSubscribeMessage` permission grant at booking time + idempotency flags. Payment-due reminder deferred. **Requires one-time template setup in 微信公众平台 → 订阅消息** (see v0.13 decisions doc for steps).
 13. **v2 delighters:** daily photo updates, vaccine cert OCR with expiry warnings, multi-pet sibling discount, post-stay report card, repeat-customer points, prepay credit packs (once WeChat Pay is unlocked by 企业认证).
 
 ## Constraints to remember

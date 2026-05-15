@@ -15,6 +15,8 @@ const ALLOWED_FIELDS = [
   'agreementZh',
   'agreementEn',
   'agreementVersion',
+  'reminderDropoffTmplId',
+  'reminderPickupTmplId',
 ];
 
 exports.main = async (event) => {

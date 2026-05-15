@@ -345,6 +345,11 @@ const zh = {
   booking_addons_basis_per_night: '按晚',
   booking_addons_quantity: '数量',
   booking_addons_subtotal: '增值服务',
+
+  reminder_section: '订阅消息（家长提醒）',
+  reminder_field_dropoff_tmpl_id: '送养前提醒模板 ID',
+  reminder_field_pickup_tmpl_id: '接回当日提醒模板 ID',
+  reminder_field_tmpl_id_ph: '在微信公众平台 → 订阅消息中复制 25 位模板 ID',
 };
 
 export default zh;
