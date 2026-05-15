@@ -65,11 +65,13 @@ Page({
   raw: [] as PetDaycare.Service[],
 
   applyServices() {
-    const services: ServiceRow[] = this.raw.map((s) => ({
+    const priceTpl = t('service_per_night');
+    const capacityTpl = t('service_per_day_capacity');
+    const services: ServiceRow[] = this.raw.map((s: PetDaycare.Service) => ({
       ...s,
       displayName: localized(s.nameZh, s.nameEn),
-      priceLabel: `¥${s.pricePerNight} / 晚`,
-      capacityLabel: `${s.capacityPerDay} / 天`,
+      priceLabel: priceTpl.replace('{n}', String(s.pricePerNight)),
+      capacityLabel: capacityTpl.replace('{n}', String(s.capacityPerDay)),
       showInactive: !s.active,
     }));
     this.setData({ services });

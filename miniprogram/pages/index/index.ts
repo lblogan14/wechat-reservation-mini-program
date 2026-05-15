@@ -23,8 +23,6 @@ Page({
     daycareHours: '',
     daycarePhoto: '',
     daycareLoaded: false,
-    todoBookingFlow: '',
-    todoMyBookings: '',
   },
 
   unsubscribe: undefined as (() => void) | undefined,
@@ -64,8 +62,6 @@ Page({
       daycareAddressLabel: t('daycare_address'),
       daycarePhoneLabel: t('daycare_phone'),
       daycareHoursLabel: t('daycare_hours'),
-      todoBookingFlow: t('todo_booking_flow'),
-      todoMyBookings: t('todo_my_bookings'),
       daycareName: cfg ? pickLocalized(cfg.nameZh, cfg.nameEn, locale) : '',
       daycareAddress: cfg?.address || '',
       daycarePhone: cfg?.phone || '',

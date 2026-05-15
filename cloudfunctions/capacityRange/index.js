@@ -9,7 +9,8 @@ function normalizeDate(ts) {
   return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
 }
 
-const ACTIVE_STATUSES = new Set(['confirmed', 'checked_in', 'checked_out']);
+// checked_out is terminal — the pet has left, the slot is free.
+const ACTIVE_STATUSES = new Set(['confirmed', 'checked_in']);
 
 async function loadBookings(db, serviceId, from, to) {
   // bookings collection may not exist yet in v0.5 — guard the call.

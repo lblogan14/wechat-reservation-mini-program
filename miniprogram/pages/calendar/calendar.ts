@@ -65,7 +65,6 @@ Page({
     serviceIndex: 0,
     cells: [] as DayCell[],
     loading: false,
-    todayLabel: '',
   },
 
   unsubscribe: undefined as (() => void) | undefined,
@@ -126,7 +125,7 @@ Page({
 
   rebuildServiceLabels() {
     this.setData({
-      serviceOptions: this.services.map((s) => ({
+      serviceOptions: (this.services as PetDaycare.Service[]).map((s) => ({
         value: s._id!,
         label: localized(s.nameZh, s.nameEn),
       })),

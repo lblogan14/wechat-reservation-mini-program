@@ -62,7 +62,7 @@ Page({
     sectionPast: '',
     sectionCancelled: '',
     sectionWaitlist: '',
-    cancelWaitlistConfirm: '',
+    cancelButton: '',
     notSignedIn: false,
     loginRequiredText: '',
     loginCta: '',
@@ -105,7 +105,7 @@ Page({
       sectionPast: t('bookings_section_past'),
       sectionCancelled: t('bookings_section_cancelled'),
       sectionWaitlist: t('bookings_section_waitlist'),
-      cancelWaitlistConfirm: t('waitlist_cancel_confirm'),
+      cancelButton: t('cancel'),
       loginRequiredText: t('booking_login_required'),
       loginCta: t('booking_required_login_cta'),
     });
@@ -125,7 +125,7 @@ Page({
     const cancelled: BookingRow[] = [];
 
     // Show child instances of a recurring series alongside the parent — useful for review.
-    for (const b of this.rawBookings) {
+    for (const b of this.rawBookings as EnrichedBooking[]) {
       const row: BookingRow = {
         _id: b._id!,
         serviceName: localized(b.serviceNameZh, b.serviceNameEn),
@@ -145,7 +145,7 @@ Page({
       }
     }
 
-    const waitlist: WaitlistRow[] = this.rawWaitlist
+    const waitlist: WaitlistRow[] = (this.rawWaitlist as EnrichedWaitlistEntry[])
       .filter((e) => e.status === 'waiting' || e.status === 'offered')
       .map((e) => ({
         _id: e._id!,

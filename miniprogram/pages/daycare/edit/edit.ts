@@ -67,7 +67,7 @@ Page({
       },
       placeholders: {
         agreementVersion: t('daycare_field_agreement_version_ph'),
-        pickTime: t('pick_date'),
+        pickTime: t('pick_time'),
         reminderTmplId: t('reminder_field_tmpl_id_ph'),
       },
     });

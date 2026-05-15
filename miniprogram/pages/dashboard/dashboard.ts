@@ -17,7 +17,6 @@ interface DashboardRow {
   canNoShow: boolean;
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 function localized(zh: string | undefined, en: string | undefined): string {
   const loc = getLocale();
@@ -137,13 +136,12 @@ Page({
 
   rebuildRows() {
     const today = startOfDayUTC(Date.now());
-    const tomorrow = today + DAY_MS;
 
     const dropoffs: DashboardRow[] = [];
     const pickups: DashboardRow[] = [];
     const staying: DashboardRow[] = [];
 
-    for (const b of this.raw) {
+    for (const b of this.raw as EnrichedBooking[]) {
       if (b.bookingStatus === 'cancelled' || b.bookingStatus === 'no_show') continue;
       const dropoffDay = startOfDayUTC(b.dropoffAt);
       const pickupDay = startOfDayUTC(b.pickupAt);
@@ -179,9 +177,6 @@ Page({
         }
       }
     }
-
-    // Suppress unused variable lint
-    void tomorrow;
 
     this.setData({ dropoffs, pickups, staying });
   },

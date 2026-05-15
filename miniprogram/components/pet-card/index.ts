@@ -6,7 +6,8 @@ Component({
   properties: {
     pet: {
       type: Object,
-      value: null as PetDaycare.Pet | null,
+      // WeChat's typings reject `null`; use undefined and treat it as "no pet yet".
+      value: undefined as PetDaycare.Pet | undefined,
     },
   },
 

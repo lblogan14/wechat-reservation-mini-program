@@ -269,8 +269,10 @@ Page({
   },
 
   rebuildAddons() {
-    const prev = new Map(this.data.addons.map((a) => [a._id, a.quantity]));
-    const rows: AddonRow[] = this.addonsRaw.map((a) => ({
+    const prev = new Map<string, number>(
+      (this.data.addons as AddonRow[]).map((a) => [a._id, a.quantity]),
+    );
+    const rows: AddonRow[] = this.addonsRaw.map((a: PetDaycare.AddOn) => ({
       _id: a._id!,
       name: localized(a.nameZh, a.nameEn),
       description: localized(a.descriptionZh, a.descriptionEn),
@@ -284,7 +286,7 @@ Page({
   },
 
   rebuildServiceOptions() {
-    const serviceOptions: ServiceOption[] = this.services.map((s) => ({
+    const serviceOptions: ServiceOption[] = this.services.map((s: PetDaycare.Service) => ({
       value: s._id!,
       label: localized(s.nameZh, s.nameEn),
       pricePerNight: s.pricePerNight,
@@ -302,7 +304,9 @@ Page({
       'recurrence_dow_fri',
       'recurrence_dow_sat',
     ];
-    const prev = new Map(this.data.recurDowChips.map((c) => [c.value, c.selected]));
+    const prev = new Map<number, boolean>(
+      (this.data.recurDowChips as DowChip[]).map((c) => [c.value, c.selected]),
+    );
     const recurDowChips: DowChip[] = labelKeys.map((k, idx) => ({
       value: idx,
       label: t(k),
@@ -350,7 +354,9 @@ Page({
 
   onPetToggle(e: WechatMiniprogram.BaseEvent) {
     const id = (e.currentTarget.dataset as { id: string }).id;
-    const pets = this.data.pets.map((p) => (p._id === id ? { ...p, selected: !p.selected } : p));
+    const pets = (this.data.pets as PetRow[]).map((p) =>
+      p._id === id ? { ...p, selected: !p.selected } : p,
+    );
     this.setData({ pets });
     this.recompute();
   },
@@ -380,7 +386,7 @@ Page({
 
   onDowChipTap(e: WechatMiniprogram.BaseEvent) {
     const value = Number((e.currentTarget.dataset as { value: string }).value);
-    const recurDowChips = this.data.recurDowChips.map((c) =>
+    const recurDowChips = (this.data.recurDowChips as DowChip[]).map((c) =>
       c.value === value ? { ...c, selected: !c.selected } : c,
     );
     this.setData({ recurDowChips });
@@ -389,14 +395,16 @@ Page({
 
   onAddonInc(e: WechatMiniprogram.BaseEvent) {
     const id = (e.currentTarget.dataset as { id: string }).id;
-    const addons = this.data.addons.map((a) => (a._id === id ? { ...a, quantity: a.quantity + 1 } : a));
+    const addons = (this.data.addons as AddonRow[]).map((a) =>
+      a._id === id ? { ...a, quantity: a.quantity + 1 } : a,
+    );
     this.setData({ addons });
     this.recompute();
   },
 
   onAddonDec(e: WechatMiniprogram.BaseEvent) {
     const id = (e.currentTarget.dataset as { id: string }).id;
-    const addons = this.data.addons.map((a) =>
+    const addons = (this.data.addons as AddonRow[]).map((a) =>
       a._id === id ? { ...a, quantity: Math.max(0, a.quantity - 1) } : a,
     );
     this.setData({ addons });
@@ -404,7 +412,10 @@ Page({
   },
 
   recompute() {
-    const { dropoffDateStr, pickupDateStr, dropoffTimeStr, pickupTimeStr, pets, serviceIndex, serviceOptions, addons } = this.data;
+    const { dropoffDateStr, pickupDateStr, dropoffTimeStr, pickupTimeStr, serviceIndex } = this.data;
+    const pets = this.data.pets as PetRow[];
+    const serviceOptions = this.data.serviceOptions as ServiceOption[];
+    const addons = this.data.addons as AddonRow[];
     const cfg = this.config;
     const dropoffDay = parseDateUTC(dropoffDateStr);
     const pickupDay = parseDateUTC(pickupDateStr);
@@ -434,7 +445,9 @@ Page({
   },
 
   recomputeRecurrence() {
-    const { recurEnabled, recurPatternOptions, recurPatternIndex, recurDowChips, recurEndsAtStr, dropoffDateStr } = this.data;
+    const { recurEnabled, recurPatternIndex, recurEndsAtStr, dropoffDateStr } = this.data;
+    const recurPatternOptions = this.data.recurPatternOptions as Array<{ value: RecurrencePattern; label: string }>;
+    const recurDowChips = this.data.recurDowChips as DowChip[];
     if (!recurEnabled) {
       this.setData({ recurSummary: '', recurInvalid: false });
       return;
@@ -464,7 +477,12 @@ Page({
   async onSubmit() {
     if (this.data.submitting) return;
 
-    const { dropoffDateStr, dropoffTimeStr, pickupDateStr, pickupTimeStr, pets, serviceIndex, serviceOptions, parentNotes, agreed, hasAgreement, agreementVersion, recurEnabled, recurPatternOptions, recurPatternIndex, recurDowChips, recurEndsAtStr, recurInvalid, addons } = this.data;
+    const { dropoffDateStr, dropoffTimeStr, pickupDateStr, pickupTimeStr, serviceIndex, parentNotes, agreed, hasAgreement, agreementVersion, recurEnabled, recurPatternIndex, recurEndsAtStr, recurInvalid } = this.data;
+    const pets = this.data.pets as PetRow[];
+    const serviceOptions = this.data.serviceOptions as ServiceOption[];
+    const recurPatternOptions = this.data.recurPatternOptions as Array<{ value: RecurrencePattern; label: string }>;
+    const recurDowChips = this.data.recurDowChips as DowChip[];
+    const addons = this.data.addons as AddonRow[];
     const dropoffAt = combine(dropoffDateStr, dropoffTimeStr);
     const pickupAt = combine(pickupDateStr, pickupTimeStr);
     if (!dropoffAt || !pickupAt || pickupAt <= dropoffAt) {

@@ -2,9 +2,11 @@ const cloud = require('wx-server-sdk');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
-async function isOwner(db, openid) {
+async function isStaffOrOwner(db, openid) {
   const res = await db.collection('users').where({ openid }).limit(1).get();
-  return res.data.length > 0 && res.data[0].role === 'owner';
+  if (!res.data.length) return false;
+  const role = res.data[0].role;
+  return role === 'owner' || role === 'staff';
 }
 
 exports.main = async (event) => {
@@ -16,7 +18,7 @@ exports.main = async (event) => {
   const bRes = await db.collection('bookings').doc(event.bookingId).get().catch(() => null);
   if (!bRes || !bRes.data) return { ok: false, error: 'booking not found' };
   const booking = bRes.data;
-  if (booking.parentOpenid !== OPENID && !(await isOwner(db, OPENID))) {
+  if (booking.parentOpenid !== OPENID && !(await isStaffOrOwner(db, OPENID))) {
     return { ok: false, error: 'not your booking' };
   }
 
@@ -37,5 +39,17 @@ exports.main = async (event) => {
       createdAt: now,
     },
   });
+
+  // Reconcile against concurrent inserts: if two callers raced past the existence check
+  // above, both will have inserted a row. Keep the lowest-id row, remove the others.
+  const all = await db.collection('messageThreads').where({ bookingId: event.bookingId }).get();
+  if (all.data.length > 1) {
+    const sorted = all.data.slice().sort((a, b) => (a._id < b._id ? -1 : 1));
+    const keep = sorted[0];
+    for (const dup of sorted.slice(1)) {
+      await db.collection('messageThreads').doc(dup._id).remove().catch(() => null);
+    }
+    return { ok: true, threadId: keep._id };
+  }
   return { ok: true, threadId: ins._id };
 };

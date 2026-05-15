@@ -2,9 +2,12 @@ const cloud = require('wx-server-sdk');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
-async function isOwner(db, openid) {
+// Owners and staff both speak on the daycare side of every thread.
+async function isStaffOrOwner(db, openid) {
   const res = await db.collection('users').where({ openid }).limit(1).get();
-  return res.data.length > 0 && res.data[0].role === 'owner';
+  if (!res.data.length) return false;
+  const role = res.data[0].role;
+  return role === 'owner' || role === 'staff';
 }
 
 async function enrich(db, threads) {
@@ -50,8 +53,10 @@ exports.main = async (event) => {
   const { OPENID } = cloud.getWXContext();
   const db = cloud.database();
 
-  const wantAll = event && event.scope === 'all';
-  const where = wantAll && (await isOwner(db, OPENID)) ? {} : { parentOpenid: OPENID };
+  const staffOrOwner = await isStaffOrOwner(db, OPENID);
+  // Staff/owner default to all; parents always see only their own.
+  const wantAll = staffOrOwner && (!event || event.scope !== 'mine');
+  const where = wantAll ? {} : { parentOpenid: OPENID };
 
   try {
     const res = await db.collection('messageThreads')

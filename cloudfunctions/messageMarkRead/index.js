@@ -2,9 +2,11 @@ const cloud = require('wx-server-sdk');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
-async function isOwner(db, openid) {
+async function isStaffOrOwner(db, openid) {
   const res = await db.collection('users').where({ openid }).limit(1).get();
-  return res.data.length > 0 && res.data[0].role === 'owner';
+  if (!res.data.length) return false;
+  const role = res.data[0].role;
+  return role === 'owner' || role === 'staff';
 }
 
 exports.main = async (event) => {
@@ -17,13 +19,13 @@ exports.main = async (event) => {
   const tRes = await db.collection('messageThreads').doc(event.threadId).get().catch(() => null);
   if (!tRes || !tRes.data) return { ok: false, error: 'thread not found' };
 
-  const owner = await isOwner(db, OPENID);
-  if (tRes.data.parentOpenid !== OPENID && !owner) {
+  const isParent = tRes.data.parentOpenid === OPENID;
+  const daycareSide = !isParent && (await isStaffOrOwner(db, OPENID));
+  if (!isParent && !daycareSide) {
     return { ok: false, error: 'not your thread' };
   }
 
   const now = Date.now();
-  const isParent = tRes.data.parentOpenid === OPENID;
 
   // Mark per-message read receipts.
   const readField = isParent ? 'readByParentAt' : 'readByOwnerAt';

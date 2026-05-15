@@ -88,7 +88,7 @@ Page({
   },
 
   rebuildRows() {
-    const queue: QueueRow[] = this.raw
+    const queue: QueueRow[] = (this.raw as EnrichedWaitlistEntry[])
       .filter((e) => e.status === 'waiting' || e.status === 'offered')
       .map((e) => ({
         _id: e._id!,

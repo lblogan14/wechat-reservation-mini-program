@@ -7,11 +7,16 @@ async function getUser(db, openid) {
   return res.data[0] || null;
 }
 
+function callerActsAsDaycare(role) {
+  return role === 'owner' || role === 'staff';
+}
+
 async function findOrCreateThread(db, caller, callerRole, opts) {
+  const asDaycare = callerActsAsDaycare(callerRole);
   if (opts.threadId) {
     const tr = await db.collection('messageThreads').doc(opts.threadId).get().catch(() => null);
     if (!tr || !tr.data) return { error: 'thread not found' };
-    if (tr.data.parentOpenid !== caller && callerRole !== 'owner') {
+    if (tr.data.parentOpenid !== caller && !asDaycare) {
       return { error: 'not your thread' };
     }
     return { thread: tr.data };
@@ -21,7 +26,7 @@ async function findOrCreateThread(db, caller, callerRole, opts) {
   const bRes = await db.collection('bookings').doc(opts.bookingId).get().catch(() => null);
   if (!bRes || !bRes.data) return { error: 'booking not found' };
   const booking = bRes.data;
-  if (booking.parentOpenid !== caller && callerRole !== 'owner') {
+  if (booking.parentOpenid !== caller && !asDaycare) {
     return { error: 'not your booking' };
   }
 

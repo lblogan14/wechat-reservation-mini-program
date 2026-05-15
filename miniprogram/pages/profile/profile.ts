@@ -1,6 +1,6 @@
 import { t, onLocaleChange } from '../../i18n/index';
-import { signIn } from '../../services/auth';
-import { getOpenid, setOpenid } from '../../services/openid';
+import { signIn, signOut } from '../../services/auth';
+import { getOpenid } from '../../services/openid';
 import { getCurrentUser, isOwner, promoteToOwner, refreshCurrentUser, setCurrentUser } from '../../services/user';
 import { messageThreadList, totalUnreadFor } from '../../services/message';
 
@@ -100,14 +100,13 @@ Page({
       wx.showToast({ title: t('auth_signin_failed'), icon: 'error' });
       return;
     }
-    setOpenid(result.openid);
+    // signIn() already persists openid + user; refresh local view.
     this.refreshAuth();
     wx.showToast({ title: t('auth_signin_success'), icon: 'success' });
   },
 
   onSignOutTap() {
-    setOpenid('');
-    setCurrentUser(null);
+    signOut();
     this.refreshAuth();
   },
 

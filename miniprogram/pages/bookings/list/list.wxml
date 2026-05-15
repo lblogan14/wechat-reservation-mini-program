@@ -39,7 +39,7 @@
         <text class="meta">{{item.dateLabel}}</text>
         <view class="row-foot">
           <text class="meta">{{item.petsLabel}}</text>
-          <button class="ghost" data-id="{{item._id}}" bindtap="onWaitlistCancel" wx:if="{{item.cancellable}}">{{cancelWaitlistConfirm}}</button>
+          <button class="ghost" data-id="{{item._id}}" bindtap="onWaitlistCancel" wx:if="{{item.cancellable}}">{{cancelButton}}</button>
         </view>
       </view>
     </block>

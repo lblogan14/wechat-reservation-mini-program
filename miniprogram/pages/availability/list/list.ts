@@ -76,8 +76,10 @@ Page({
   rawOverrides: [] as PetDaycare.AvailabilityOverride[],
 
   applyOverrides() {
-    const sMap = new Map(this.rawServices.map((s) => [s._id!, s]));
-    const overrides: OverrideRow[] = this.rawOverrides.map((o) => {
+    const sMap = new Map<string, PetDaycare.Service>(
+      (this.rawServices as PetDaycare.Service[]).map((s) => [s._id!, s]),
+    );
+    const overrides: OverrideRow[] = (this.rawOverrides as PetDaycare.AvailabilityOverride[]).map((o) => {
       const svc = sMap.get(o.serviceId);
       let summary = '';
       if (typeof o.capacityAbsolute === 'number') {

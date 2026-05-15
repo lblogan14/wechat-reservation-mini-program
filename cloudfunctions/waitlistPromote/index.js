@@ -3,7 +3,8 @@ const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const ACTIVE_BOOKING_STATUSES = new Set(['confirmed', 'checked_in', 'checked_out']);
+// checked_out is terminal — slot is free, do not consume capacity.
+const ACTIVE_BOOKING_STATUSES = new Set(['confirmed', 'checked_in']);
 
 function normalizeDate(ts) {
   const d = new Date(ts);

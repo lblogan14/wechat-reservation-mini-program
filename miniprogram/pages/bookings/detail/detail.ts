@@ -91,7 +91,7 @@ Page({
     this.refreshStrings();
     this.unsubscribe = onLocaleChange(() => {
       this.refreshStrings();
-      this.applyBooking();
+      this.applyBooking(this.data.booking);
     });
 
     if (getOpenid()) await refreshCurrentUser();
@@ -139,12 +139,10 @@ Page({
     const scope = isOwner() ? 'all' : 'mine';
     const bookings = await bookingList({ scope });
     const found = bookings.find((b) => b._id === this.bookingId) || null;
-    this.data.booking = found;
-    this.applyBooking();
+    this.applyBooking(found);
   },
 
-  applyBooking() {
-    const b = this.data.booking;
+  applyBooking(b: EnrichedBooking | null) {
     if (!b) {
       this.setData({ serviceName: '', statusLabel: '', petsStr: '' });
       return;

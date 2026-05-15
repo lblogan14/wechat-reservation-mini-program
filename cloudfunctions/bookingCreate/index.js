@@ -10,7 +10,8 @@ function normalizeDate(ts) {
   return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
 }
 
-const ACTIVE_BOOKING_STATUSES = new Set(['confirmed', 'checked_in', 'checked_out']);
+// checked_out is terminal — slot is free, do not consume capacity.
+const ACTIVE_BOOKING_STATUSES = new Set(['confirmed', 'checked_in']);
 
 function generateOccurrences(dropoffAt, pickupAt, recurrence) {
   if (!recurrence) {

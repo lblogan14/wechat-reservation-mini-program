@@ -104,6 +104,22 @@ exports.main = async () => {
   let skipped = 0;
   const errors = [];
 
+  // Optimistic claim: flip the flag BEFORE sending. If two concurrent invocations race,
+  // only one update succeeds (stats.updated === 1). The other sees 0 and skips.
+  // Failure mode if send() throws after the flag flip: we lose that reminder rather than
+  // double-send. That's the safer direction for users.
+  async function claimReminder(bookingId, kind) {
+    const field = kind === 'dropoff' ? 'reminderSentDropoff' : 'reminderSentPickup';
+    try {
+      const res = await db.collection('bookings')
+        .where({ _id: bookingId, [field]: _.neq(true) })
+        .update({ data: { [field]: true, updatedAt: Date.now() } });
+      return res.stats && res.stats.updated === 1;
+    } catch (err) {
+      return false;
+    }
+  }
+
   for (const b of target.data) {
     if (!ACTIVE_STATUSES.has(b.bookingStatus)) continue;
 
@@ -114,35 +130,31 @@ exports.main = async () => {
     const dropoffDay = normalizeDate(b.dropoffAt);
     const pickupDay = normalizeDate(b.pickupAt);
 
+    const before = sent + errors.length;
+
     // Drop-off reminder: dropoff day is tomorrow + we haven't sent yet
     if (dropoffTmplId && dropoffDay === tomorrowStart && !b.reminderSentDropoff) {
-      const data = buildData(b, daycareName, serviceName, petNames, fmtDateTime(b.dropoffAt));
-      const r = await sendOne(b.parentOpenid, dropoffTmplId, data);
-      if (r.ok) {
-        await db.collection('bookings').doc(b._id).update({
-          data: { reminderSentDropoff: true, updatedAt: Date.now() },
-        });
-        sent += 1;
-      } else {
-        errors.push({ bookingId: b._id, kind: 'dropoff', error: r.error });
+      const claimed = await claimReminder(b._id, 'dropoff');
+      if (claimed) {
+        const data = buildData(b, daycareName, serviceName, petNames, fmtDateTime(b.dropoffAt));
+        const r = await sendOne(b.parentOpenid, dropoffTmplId, data);
+        if (r.ok) sent += 1;
+        else errors.push({ bookingId: b._id, kind: 'dropoff', error: r.error });
       }
     }
 
     // Pick-up reminder: pickup day is today + we haven't sent yet
     if (pickupTmplId && pickupDay === todayStart && !b.reminderSentPickup) {
-      const data = buildData(b, daycareName, serviceName, petNames, fmtDateTime(b.pickupAt));
-      const r = await sendOne(b.parentOpenid, pickupTmplId, data);
-      if (r.ok) {
-        await db.collection('bookings').doc(b._id).update({
-          data: { reminderSentPickup: true, updatedAt: Date.now() },
-        });
-        sent += 1;
-      } else {
-        errors.push({ bookingId: b._id, kind: 'pickup', error: r.error });
+      const claimed = await claimReminder(b._id, 'pickup');
+      if (claimed) {
+        const data = buildData(b, daycareName, serviceName, petNames, fmtDateTime(b.pickupAt));
+        const r = await sendOne(b.parentOpenid, pickupTmplId, data);
+        if (r.ok) sent += 1;
+        else errors.push({ bookingId: b._id, kind: 'pickup', error: r.error });
       }
     }
 
-    if (!sent && !errors.length) skipped += 1;
+    if (sent + errors.length === before) skipped += 1;
   }
 
   return { ok: true, sent, skipped, errors };

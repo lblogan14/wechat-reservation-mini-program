@@ -6,6 +6,8 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const ALLOWED_TRANSITIONS = {
   confirmed: new Set(['checked_in', 'no_show']),
   checked_in: new Set(['checked_out']),
+  // Recover from a too-eager no-show mark: e.g., guest shows up an hour late.
+  no_show: new Set(['checked_in']),
 };
 
 async function isOwner(db, openid) {

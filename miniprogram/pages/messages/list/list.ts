@@ -93,7 +93,7 @@ Page({
 
   rebuildRows() {
     const myOpenid = getOpenid();
-    const rows: ThreadRow[] = this.raw.map((th) => {
+    const rows: ThreadRow[] = (this.raw as EnrichedMessageThread[]).map((th) => {
       const serviceName = localized(th.serviceNameZh, th.serviceNameEn) || '—';
       const about = th.bookingDropoffAt
         ? fmtTpl(t('messages_thread_about'), {

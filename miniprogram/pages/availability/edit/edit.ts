@@ -125,7 +125,7 @@ Page({
       return;
     }
     const mode: Mode = typeof found.capacityAbsolute === 'number' ? 'absolute' : 'delta';
-    const sIdx = this.data.serviceOptions.findIndex((o) => o.value === found.serviceId);
+    const sIdx = (this.data.serviceOptions as ServiceOption[]).findIndex((o) => o.value === found.serviceId);
     this.setData({
       override: found,
       dateStr: fmtDate(found.date),

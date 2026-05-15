@@ -68,12 +68,12 @@ Page({
       wx.showToast({ title: 'Not found', icon: 'error' });
       return;
     }
+    const basisOptions = this.data.basisOptions as Array<{ value: ChargeBasis; label: string }>;
+    const idx = basisOptions.findIndex((o) => o.value === found.chargeBasis);
     this.setData({
       addon: found,
       priceInput: String(found.unitPrice),
-      basisIndex: this.data.basisOptions.findIndex((o) => o.value === found.chargeBasis) >= 0
-        ? this.data.basisOptions.findIndex((o) => o.value === found.chargeBasis)
-        : 0,
+      basisIndex: idx >= 0 ? idx : 0,
       title: t('addon_edit_title_edit'),
     });
   },
