@@ -305,6 +305,22 @@ const en: Dict = {
   owner_payment_save: 'Save payment status',
   owner_payment_save_success: 'Payment status updated',
   owner_payment_save_failed: 'Failed to update payment status',
+
+  messages_title: 'Messages',
+  messages_empty: 'No messages yet. Reach out from a booking detail page.',
+  messages_owner_empty: 'No messages from parents yet.',
+  messages_thread_label_parent: 'Chat with the owner',
+  messages_thread_label_owner: 'Chat with {who}',
+  messages_thread_about: 'About: {service} · {from} → {to}',
+  messages_thread_input_ph: 'Type a message…',
+  messages_thread_send: 'Send',
+  messages_thread_send_failed: 'Send failed',
+  messages_thread_load_failed: 'Load failed — pull to refresh',
+  messages_thread_empty: 'No messages yet — send one to start',
+  messages_unread_badge: '{n}',
+  owner_message_button: 'Message parent',
+  parent_message_button: 'Message owner',
+  profile_messages_link: 'Messages',
 };
 
 export default en;

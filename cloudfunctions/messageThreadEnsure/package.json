@@ -1,0 +1,9 @@
+{
+  "name": "messageThreadEnsure",
+  "version": "1.0.0",
+  "description": "Find or create the message thread for a booking; returns threadId.",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.0"
+  }
+}

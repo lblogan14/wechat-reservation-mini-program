@@ -2,6 +2,9 @@ import { t, onLocaleChange } from '../../i18n/index';
 import { signIn } from '../../services/auth';
 import { getOpenid, setOpenid } from '../../services/openid';
 import { getCurrentUser, isOwner, promoteToOwner, refreshCurrentUser, setCurrentUser } from '../../services/user';
+import { messageThreadList, totalUnreadFor } from '../../services/message';
+
+const PROFILE_TAB_INDEX = 2;
 
 Page({
   data: {
@@ -19,6 +22,8 @@ Page({
     manageAvailabilityLabel: '',
     manageWaitlistLabel: '',
     dashboardLabel: '',
+    messagesLabel: '',
+    unreadCount: 0,
     promoteTitle: '',
     promoteHint: '',
     promoteCodeLabel: '',
@@ -40,6 +45,9 @@ Page({
     if (this.data.signedIn) {
       await refreshCurrentUser();
       this.refreshAuth();
+      this.refreshUnread();
+    } else {
+      this.clearUnread();
     }
   },
 
@@ -60,6 +68,7 @@ Page({
       manageAvailabilityLabel: t('owner_manage_availability'),
       manageWaitlistLabel: t('owner_manage_waitlist'),
       dashboardLabel: t('owner_dashboard'),
+      messagesLabel: t('profile_messages_link'),
       promoteTitle: t('owner_promote_title'),
       promoteHint: t('owner_promote_hint'),
       promoteCodeLabel: t('owner_promote_code'),
@@ -135,5 +144,27 @@ Page({
 
   onDashboardTap() {
     wx.navigateTo({ url: '/pages/dashboard/dashboard' });
+  },
+
+  onMessagesTap() {
+    wx.navigateTo({ url: '/pages/messages/list/list' });
+  },
+
+  async refreshUnread() {
+    const myOpenid = getOpenid();
+    const asOwner = isOwner();
+    const threads = await messageThreadList({ scope: asOwner ? 'all' : 'mine' });
+    const total = totalUnreadFor(threads, myOpenid, asOwner);
+    this.setData({ unreadCount: total });
+    if (total > 0) {
+      wx.setTabBarBadge({ index: PROFILE_TAB_INDEX, text: total > 99 ? '99+' : String(total) }).catch(() => {});
+    } else {
+      wx.removeTabBarBadge({ index: PROFILE_TAB_INDEX }).catch(() => {});
+    }
+  },
+
+  clearUnread() {
+    this.setData({ unreadCount: 0 });
+    wx.removeTabBarBadge({ index: PROFILE_TAB_INDEX }).catch(() => {});
   },
 });

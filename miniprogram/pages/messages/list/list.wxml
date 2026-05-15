@@ -1,0 +1,26 @@
+<view class="container">
+  <view class="header"><text class="title">{{titleText}}</text></view>
+
+  <block wx:if="{{notSignedIn}}">
+    <view class="card empty">
+      <text class="muted">{{loginRequiredText}}</text>
+      <button class="primary" bindtap="goSignIn">{{loginCta}}</button>
+    </view>
+  </block>
+
+  <block wx:elif="{{!rows.length}}">
+    <view class="card empty"><text class="muted">{{emptyText}}</text></view>
+  </block>
+
+  <block wx:else>
+    <view wx:for="{{rows}}" wx:key="_id" class="row" data-id="{{item._id}}" bindtap="onRowTap">
+      <view class="row-head">
+        <text class="thread-title">{{item.title}}</text>
+        <text class="time muted small">{{item.timeStr}}</text>
+        <view wx:if="{{item.unread > 0}}" class="badge">{{item.unread}}</view>
+      </view>
+      <text wx:if="{{item.about}}" class="meta muted">{{item.about}}</text>
+      <text class="preview">{{item.preview}}</text>
+    </view>
+  </block>
+</view>

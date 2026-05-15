@@ -1,0 +1,30 @@
+<view class="thread">
+  <block wx:if="{{notSignedIn}}">
+    <view class="empty-screen">
+      <text class="muted">{{loginRequiredText}}</text>
+      <button class="primary" bindtap="goSignIn">{{loginCta}}</button>
+    </view>
+  </block>
+
+  <block wx:else>
+    <scroll-view class="scroll" scroll-y scroll-into-view="{{scrollIntoView}}" enhanced="{{true}}">
+      <block wx:if="{{!messages.length}}">
+        <view class="empty"><text class="muted">{{emptyText}}</text></view>
+      </block>
+      <block wx:else>
+        <view wx:for="{{messages}}" wx:key="_id" id="msg-{{item._id}}" class="msg-row {{item.mine ? 'mine' : 'theirs'}}">
+          <view class="bubble">
+            <image wx:if="{{item.attachmentFileID}}" class="attach" src="{{item.attachmentFileID}}" mode="widthFix" />
+            <text wx:if="{{item.body}}" class="body">{{item.body}}</text>
+            <text class="time">{{item.timeStr}}</text>
+          </view>
+        </view>
+      </block>
+    </scroll-view>
+
+    <view class="composer">
+      <input class="input" value="{{draft}}" bindinput="onDraftInput" placeholder="{{inputPlaceholder}}" confirm-type="send" bindconfirm="onSend" />
+      <button class="primary tiny" bindtap="onSend" disabled="{{sending || !draft}}">{{sendLabel}}</button>
+    </view>
+  </block>
+</view>

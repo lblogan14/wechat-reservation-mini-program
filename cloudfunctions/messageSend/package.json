@@ -1,0 +1,9 @@
+{
+  "name": "messageSend",
+  "version": "1.0.0",
+  "description": "Send a message in a thread; auto-creates a thread for a booking if none exists.",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.0"
+  }
+}

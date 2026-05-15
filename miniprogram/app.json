@@ -14,7 +14,9 @@
     "pages/bookings/list/list",
     "pages/bookings/detail/detail",
     "pages/waitlist/queue/queue",
-    "pages/dashboard/dashboard"
+    "pages/dashboard/dashboard",
+    "pages/messages/list/list",
+    "pages/messages/thread/thread"
   ],
   "window": {
     "backgroundTextStyle": "light",

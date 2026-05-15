@@ -1,0 +1,9 @@
+{
+  "name": "messageMarkRead",
+  "version": "1.0.0",
+  "description": "Mark all unread messages in a thread as read for the caller's role.",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.0"
+  }
+}

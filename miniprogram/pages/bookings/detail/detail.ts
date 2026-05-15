@@ -9,6 +9,7 @@ import {
   type EnrichedBooking,
   type OwnerBookingTransition,
 } from '../../../services/booking';
+import { messageThreadEnsure } from '../../../services/message';
 
 function localized(zh: string | undefined, en: string | undefined): string {
   const loc = getLocale();
@@ -79,6 +80,7 @@ Page({
     ownerPaymentNotePh: '',
     ownerPaymentSaveLabel: '',
     ownerSavingPayment: false,
+    messageLabel: '',
   },
 
   unsubscribe: undefined as (() => void) | undefined,
@@ -118,6 +120,7 @@ Page({
       ownerPaymentNotePh: t('owner_payment_note_ph'),
       ownerPaymentSaveLabel: t('owner_payment_save'),
       ownerPaymentOptions: PAYMENT_VALUES.map((v) => ({ value: v, label: t(PAYMENT_KEY[v]) })),
+      messageLabel: isOwner() ? t('owner_message_button') : t('parent_message_button'),
       labels: {
         service: t('booking_detail_service'),
         status: t('booking_detail_status'),
@@ -234,6 +237,16 @@ Page({
 
   onPaymentNoteInput(e: WechatMiniprogram.Input) {
     this.setData({ ownerPaymentNote: e.detail.value });
+  },
+
+  async onOpenThread() {
+    if (!this.data.booking) return;
+    const res = await messageThreadEnsure(this.data.booking._id!);
+    if (!res.ok || !res.threadId) {
+      wx.showToast({ title: res.error || 'Failed to open thread', icon: 'error' });
+      return;
+    }
+    wx.navigateTo({ url: `/pages/messages/thread/thread?id=${res.threadId}` });
   },
 
   async onSavePayment() {

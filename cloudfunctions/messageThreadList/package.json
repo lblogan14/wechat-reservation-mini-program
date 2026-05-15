@@ -1,0 +1,9 @@
+{
+  "name": "messageThreadList",
+  "version": "1.0.0",
+  "description": "List message threads. Parent sees their own; owner can pass scope:'all'.",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.0"
+  }
+}

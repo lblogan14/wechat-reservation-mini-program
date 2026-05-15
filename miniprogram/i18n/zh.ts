@@ -303,6 +303,22 @@ const zh = {
   owner_payment_save: '保存收款状态',
   owner_payment_save_success: '已更新收款状态',
   owner_payment_save_failed: '收款状态更新失败',
+
+  messages_title: '消息',
+  messages_empty: '还没有消息。你可以从订单详情中给主人留言。',
+  messages_owner_empty: '还没有家长发来的消息。',
+  messages_thread_label_parent: '与主人沟通',
+  messages_thread_label_owner: '与 {who} 沟通',
+  messages_thread_about: '关于：{service} · {from} → {to}',
+  messages_thread_input_ph: '输入消息…',
+  messages_thread_send: '发送',
+  messages_thread_send_failed: '发送失败',
+  messages_thread_load_failed: '加载失败，下拉刷新',
+  messages_thread_empty: '还没有消息，发条消息开始沟通吧',
+  messages_unread_badge: '{n}',
+  owner_message_button: '与家长沟通',
+  parent_message_button: '联系主人',
+  profile_messages_link: '消息',
 };
 
 export default zh;

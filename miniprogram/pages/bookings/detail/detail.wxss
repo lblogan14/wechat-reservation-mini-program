@@ -112,6 +112,12 @@
   color: #ffffff;
 }
 
+.primary.outline {
+  background-color: #ffffff;
+  color: #0d6efd;
+  border: 2rpx solid #0d6efd;
+}
+
 .primary.tiny,
 .ghost.tiny {
   font-size: 24rpx;

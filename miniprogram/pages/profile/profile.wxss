@@ -23,6 +23,32 @@
   margin-bottom: 24rpx;
 }
 
+.section-title.flex { margin-bottom: 0; flex: 1; }
+
+.messages-section {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.badge {
+  min-width: 36rpx;
+  height: 36rpx;
+  padding: 0 12rpx;
+  border-radius: 18rpx;
+  background-color: #dc3545;
+  color: #ffffff;
+  font-size: 22rpx;
+  line-height: 36rpx;
+  text-align: center;
+}
+
+.chevron {
+  font-size: 36rpx;
+  color: #ccc;
+}
+
 .row {
   margin-bottom: 24rpx;
 }

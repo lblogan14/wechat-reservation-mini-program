@@ -4,23 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-v0.10 landed on 2026-05-14 (owner dashboard). The repo now provides:
+v0.11 landed on 2026-05-14 (2-way messaging). The repo now provides:
 
 - Project shell + bilingual zh/en i18n + locale-reactive tab bar
-- Sign-in flow (openid via `wx.cloud.callFunction('login')`, persisted in `wx.storage`); user record (with `role`) cached in `App.globalData.user`
-- Pet profile CRUD: list page (tab) + edit page with full schema
-- Daycare identity: read-only card on home tab + owner-only edit page
-- Owner services + availability (v0.4): `services` + `availabilityOverrides`; owner-only list + edit pages
-- Availability calendar (v0.5): parent-facing monthly grid + traffic-light fill, `capacityRange` cloud function as the single source of truth for per-day remaining capacity
-- Booking creation flow (v0.6): single-page form at `pages/booking/new/`; `bookingCreate` validates pets/service/capacity and inserts with `bookingStatus:'confirmed'`
-- Recurring bookings (v0.7): optional recurrence card on the booking form; `bookingCreate` generates all occurrences upfront (cap 60) and links them with `parentBookingId`
-- My bookings (v0.8): parent-facing `pages/bookings/list/` (Upcoming / Past / Cancelled + inline Waitlist) → `pages/bookings/detail/` with cancel single + cancel-series. `bookingList` is server-enriched with `serviceNameZh/En` + `petNames`.
-- Waitlist (v0.9): capacity-blocked single-stay attempts get a "Join waitlist" modal; owner `pages/waitlist/queue/` with Promote-to-Booking + Cancel; `waitlistPromote` re-runs capacity check and creates the booking.
-- **Owner dashboard** (v0.10): `pages/dashboard/` shows today's drop-offs / pick-ups / currently-staying pets with inline action buttons (check-in, check-out, mark no-show). Reachable from profile owner-tools (primary CTA). The shared booking detail page picks up an owner panel (check-in/check-out/no-show buttons + payment status picker + payment note field) when `isOwner()` is true — fetches via `scope:'all'` so the owner can open any booking. Two new cloud functions: `bookingStatusUpdate` (validates allowed transitions: confirmed→checked_in, confirmed→no_show, checked_in→checked_out) and `bookingPaymentUpdate` (paymentStatus + paymentNote, since v1 has no WeChat Pay).
+- Sign-in flow + cached User with `role`
+- Pet profile CRUD, daycare identity, services + availability (v0.4)
+- Availability calendar (v0.5) — `capacityRange` is the single source of truth for remaining slots
+- Booking creation flow (v0.6) + recurring bookings (v0.7)
+- My bookings (v0.8): parent list + detail with cancel single + cancel-series
+- Waitlist (v0.9): capacity-blocked → "Join waitlist" modal; owner queue with Promote-to-Booking
+- Owner dashboard (v0.10): today's drop-offs / pick-ups / staying; booking detail picks up an owner panel for status + payment
+- **2-way messaging** (v0.11): one thread per booking, auto-created on first message. Booking detail page has a "Message owner / Message parent" button that calls `messageThreadEnsure` then navigates to `pages/messages/thread/?id=X`. Thread view shows messages chronologically with bubbles (mine = blue right, theirs = white left) and polls every 10s while open via `setInterval`. Threads list at `pages/messages/list/` reachable from a new "Messages" link on the profile tab; parent sees own threads, owner sees all (scope:'all'). Tab bar badge on the profile tab shows total unread count (≤99 + "99+" overflow) and refreshes on profile `onShow` after `refreshCurrentUser`. **Pre-booking inquiry threads deferred** — every thread requires a `bookingId`.
 - Three tabs: 首页 / 我的宠物 / 我的, all bilingual-aware
-- Twenty-four cloud functions (+2 from v0.9): `login`, `userGet`, `userPromote`, `petList`, `petUpsert`, `petDelete`, `daycareGet`, `daycareUpsert`, `serviceList`, `serviceUpsert`, `serviceDelete`, `availabilityList`, `availabilityUpsert`, `availabilityDelete`, `capacityRange`, `bookingCreate`, `bookingList`, `bookingCancel`, `bookingStatusUpdate`, `bookingPaymentUpdate`, `waitlistCreate`, `waitlistList`, `waitlistCancel`, `waitlistPromote`
+- Twenty-nine cloud functions (+5 from v0.10): adds `messageThreadList`, `messageList`, `messageSend`, `messageMarkRead`, `messageThreadEnsure`
 
-Not yet implemented: 2-way messaging (#10), add-ons UI (#11), subscribe-message reminders (#12), walk-in manual entry. See **v1 backlog**.
+Not yet implemented: add-ons UI (#11), subscribe-message reminders (#12), walk-in manual entry, pre-booking inquiry threads. See **v1 backlog**.
 
 ## v0.6 decisions doc
 
@@ -67,6 +65,17 @@ Reasonable defaults baked into the booking flow — flag any that need changing:
 - **Walk-in entry deferred**: the dashboard does NOT yet support the owner creating a booking on behalf of a parent. Workaround in v1: ask the parent to use the app, or insert directly in 云开发 console. Building a real walk-in flow requires letting the owner choose any parent's pets, which is a UX rewrite of the booking form. Revisit if walk-ins become common.
 - **No timezone refinement yet**: dashboard uses UTC start-of-day everywhere. For a 中国 daycare the calendar day matches CST until 16:00 UTC (00:00 CST next day), so the only practical issue would be 4pm–midnight UTC drop-offs on the previous day. Fix later by switching to a fixed +08:00 offset (already flagged in capacity / date math notes).
 
+## v0.11 messaging decisions
+
+- **One thread per booking**, auto-created on first send (`messageSend` accepts `{ bookingId, body }` and creates the thread). The `messageThreadEnsure` helper lets the booking detail page open the thread without sending a first message.
+- **No pre-booking inquiry threads**: every thread has a `bookingId`. If you want to ask the owner a question before booking, you have to book first (or call). Revisit when there's a real product use case.
+- **Polling, not push**: `setInterval(fetch, 10_000)` while the thread page is open; cleared on `onHide` / `onUnload`. Each poll calls `messageList(threadId)` which returns the full message array (limit 500). For v1 this is fine — single home, low message volume. Upgrade to 云开发 实时数据推送 (real-time DB watch) when conversations get long or chatty.
+- **Read receipts**: per-message `readByParentAt` / `readByOwnerAt` timestamps + thread-level `unreadForParent` / `unreadForOwner` counters. `messageMarkRead` updates both in one call. Called on thread open AND each poll cycle that detected new messages.
+- **Tab bar badge**: refreshed on profile tab `onShow` (after `refreshCurrentUser`). NOT refreshed on every tab switch — that would require global polling. So the badge can be stale until the user opens the profile tab; acceptable for MVP. Improve later by polling at App level.
+- **Owner sees all threads, parents see own**: `messageThreadList` honours `scope:'all'` only for owners (server-side check). Owner total-unread is sum of `unreadForOwner` across all threads.
+- **Message body**: text-only in v0.11. Schema supports `attachmentFileID` but the composer doesn't yet upload images; the thread view renders an `<image>` if a message has one. Adding image upload to the composer is ~30 lines whenever it's wanted.
+- **Auto-mark-read on open**: when a parent opens a thread, all messages from the owner are marked read. Same in reverse. No "unread until visible" granularity (e.g., scrolling past).
+
 ## Product goal
 
 A WeChat Mini Program that lets pet owners book appointments at pet daycare homes — view available time slots, select services, and confirm appointments inside the WeChat client. See [README.md](README.md) for the full pitch (bilingual: English + 中文).
@@ -85,8 +94,8 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 2. **Install dev dependencies:** `npm install` at the repo root. This installs `miniprogram-api-typings` (TS types for `wx.*`) and `typescript`. Run `npm run typecheck` to type-check without emitting.
 3. **Open 微信开发者工具** (download: https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html). Import this repo directory; the IDE picks up [project.config.json](project.config.json) automatically and detects the TS source.
 4. **Create a 云开发 environment:** in the IDE, open the 云开发 panel → 新建环境. Copy the env ID into [miniprogram/app.ts](miniprogram/app.ts) at the `// TODO: replace with your 云开发 env ID` comment.
-5. **Create database collections** in the 云开发 console (the SDK does not auto-create them). For v0.9: `users` + `pets` + `daycareConfig` + `services` + `availabilityOverrides` + `bookings` + `waitlistEntries`. Future milestones will add `messageThreads` + `messages`, `addons`.
-6. **Deploy cloud functions:** for each folder under [cloudfunctions/](cloudfunctions/), right-click in the IDE → *上传并部署：云端安装依赖（不上传 node_modules）*. The IDE handles `npm install` server-side. Current functions: `login`, `userGet`, `userPromote`, `petList`, `petUpsert`, `petDelete`, `daycareGet`, `daycareUpsert`, `serviceList`, `serviceUpsert`, `serviceDelete`, `availabilityList`, `availabilityUpsert`, `availabilityDelete`, `capacityRange`, `bookingCreate`, `bookingList`, `bookingCancel`, `bookingStatusUpdate`, `bookingPaymentUpdate`, `waitlistCreate`, `waitlistList`, `waitlistCancel`, `waitlistPromote`.
+5. **Create database collections** in the 云开发 console (the SDK does not auto-create them). For v0.11: `users` + `pets` + `daycareConfig` + `services` + `availabilityOverrides` + `bookings` + `waitlistEntries` + `messageThreads` + `messages`. Future milestones will add `addons`.
+6. **Deploy cloud functions:** for each folder under [cloudfunctions/](cloudfunctions/), right-click in the IDE → *上传并部署：云端安装依赖（不上传 node_modules）*. The IDE handles `npm install` server-side. Current functions: `login`, `userGet`, `userPromote`, `petList`, `petUpsert`, `petDelete`, `daycareGet`, `daycareUpsert`, `serviceList`, `serviceUpsert`, `serviceDelete`, `availabilityList`, `availabilityUpsert`, `availabilityDelete`, `capacityRange`, `bookingCreate`, `bookingList`, `bookingCancel`, `bookingStatusUpdate`, `bookingPaymentUpdate`, `waitlistCreate`, `waitlistList`, `waitlistCancel`, `waitlistPromote`, `messageThreadList`, `messageList`, `messageSend`, `messageMarkRead`, `messageThreadEnsure`.
    - For `userPromote`, also set a `BOOTSTRAP_OWNER_CODE` environment variable on the cloud function (cloud-function panel → 环境变量). The first parent uses that code in the profile page's "Promote to owner" form to flip their `User.role` to `'owner'`. Without the env var, the function refuses all promotions.
 7. **Preview:** click *预览* in the IDE to generate a QR code, scan with WeChat. Or run in the simulator.
 
@@ -114,6 +123,8 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 │   │   ├── bookings/detail/           # subpage: single booking detail + cancel; owner panel for status/payment
 │   │   ├── waitlist/queue/            # subpage: owner-only waitlist queue with promote action
 │   │   ├── dashboard/                 # subpage: owner-only today view (drop-offs / pick-ups / staying)
+│   │   ├── messages/list/             # subpage: list of message threads (parent own; owner all)
+│   │   ├── messages/thread/           # subpage: chat view for a single thread; polls every 10s
 │   │   └── profile/                   # "me" tab — sign-in + owner tools + language switcher
 │   ├── components/
 │   │   ├── lang-switcher/             # zh/en toggle
@@ -129,7 +140,8 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 │   │   ├── availability.ts            # availabilityList / availabilityUpsert / availabilityDelete
 │   │   ├── capacity.ts                # capacityRange — per-day remaining slots for a service
 │   │   ├── booking.ts                 # bookingCreate / bookingList / bookingCancel / bookingStatusUpdate / bookingPaymentUpdate
-│   │   └── waitlist.ts                # waitlistCreate / waitlistList / waitlistCancel / waitlistPromote
+│   │   ├── waitlist.ts                # waitlistCreate / waitlistList / waitlistCancel / waitlistPromote
+│   │   └── message.ts                 # messageThreadList / messageList / messageSend / messageMarkRead / messageThreadEnsure / totalUnreadFor
 │   ├── i18n/
 │   │   ├── index.ts                   # locale store + t()
 │   │   ├── zh.ts                      # source-of-truth dictionary (other locales conform to its shape)
@@ -160,7 +172,12 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 │   ├── waitlistCreate/                # insert a waitlist entry for the caller
 │   ├── waitlistList/                  # list caller's waitlist entries (or scope:'all' for owner queue) — enriched
 │   ├── waitlistCancel/                # cancel a waitlist entry (parent own; owner any)
-│   └── waitlistPromote/               # owner-only: re-check capacity then convert entry → confirmed booking
+│   ├── waitlistPromote/               # owner-only: re-check capacity then convert entry → confirmed booking
+│   ├── messageThreadList/             # list message threads (mine / scope:'all' for owner) — server-enriched
+│   ├── messageList/                   # list all messages in a thread
+│   ├── messageSend/                   # send a message; auto-creates thread for a bookingId
+│   ├── messageMarkRead/               # mark all unread messages in a thread read for caller's role
+│   └── messageThreadEnsure/           # find or create thread for a booking (open chat without sending)
 ├── project.config.json                # IDE-level config (AppID goes here)
 ├── sitemap.json
 └── package.json                       # dev-only: api-typings + typescript
@@ -200,7 +217,7 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 7. ~~Waitlist~~ — landed in v0.9. `waitlistEntries` + four cloud functions; capacity-blocked single-stay attempts get a "Join waitlist" modal; owner queue at `pages/waitlist/queue/` with Promote-to-Booking action. Series-waitlisting deferred to v2.
 8. ~~My bookings (pet parent)~~ — landed in v0.8. `pages/bookings/list/` (grouped Upcoming / Past / Cancelled + inline Waitlist) + `pages/bookings/detail/` (cancel single + cancel-series). No cancel-policy lead-time enforcement in v1; the daycare's `cancelPolicyZh/En` is shown for expectations only.
 9. ~~Owner dashboard~~ — landed in v0.10. Today view (`pages/dashboard/`) with inline check-in / check-out / no-show actions; owner panel on the booking detail page handles payment status + note. Walk-in manual entry deferred to v1.x (would require an owner-side variant of the booking form that lets the owner pick any parent's pets). Calendar block-out and waitlist queue already accessible from owner-tools.
-10. **2-way messaging parent ↔ owner** — `messageThreads` + `messages` collections, one thread per booking (or pre-booking inquiry). MVP can poll every 10s when the thread is open; upgrade to 云开发 实时数据推送 later. Plumb a red-dot badge on the home + profile tabs.
+10. ~~2-way messaging parent ↔ owner~~ — landed in v0.11. `messageThreads` + `messages` collections; one thread per booking auto-created on first message via `messageThreadEnsure`. 10s polling while thread is open. Tab bar badge on profile tab refreshes on profile `onShow`. Pre-booking inquiry threads deferred.
 11. **Service add-ons catalog** — `addons` collection (grooming, extra walks, medication admin). Embedded into `Booking.addOns` at booking time so historical pricing is preserved.
 12. **Subscribe-message reminders** — 24h before drop-off, day-of pick-up, payment due. Requires the user to grant `wx.requestSubscribeMessage` permission at booking time.
 13. **v2 delighters:** daily photo updates, vaccine cert OCR with expiry warnings, multi-pet sibling discount, post-stay report card, repeat-customer points, prepay credit packs (once WeChat Pay is unlocked by 企业认证).

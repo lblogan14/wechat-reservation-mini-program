@@ -66,6 +66,7 @@
     </view>
 
     <view class="actions">
+      <button class="primary outline" bindtap="onOpenThread">{{messageLabel}}</button>
       <button wx:if="{{canCancelSingle}}" class="danger" bindtap="onCancelTap">{{cancelLabel}}</button>
       <button wx:if="{{canCancelSeries}}" class="danger outline" bindtap="onCancelSeriesTap">{{cancelSeriesLabel}}</button>
       <view wx:if="{{!canCancelSingle && !isOwnerView}}" class="hint muted">{{cancelBlockedNote}}</view>
