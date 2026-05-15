@@ -49,8 +49,10 @@ exports.main = async (event) => {
     .where({ serviceId: entry.serviceId, date: _.gte(rangeFrom).and(_.lte(rangeTo)) })
     .limit(500)
     .get();
+  // Sort by `_id` so duplicate absolute overrides resolve deterministically (last-_id wins).
+  const overridesSorted = overridesRes.data.slice().sort((a, b) => String(a._id).localeCompare(String(b._id)));
   const overrideMap = new Map();
-  for (const o of overridesRes.data) {
+  for (const o of overridesSorted) {
     const k = normalizeDate(o.date);
     const item = overrideMap.get(k) || { absolute: null, delta: 0 };
     if (typeof o.capacityAbsolute === 'number') item.absolute = o.capacityAbsolute;

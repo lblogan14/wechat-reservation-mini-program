@@ -2,13 +2,16 @@ import { t, onLocaleChange } from '../../i18n/index';
 
 const unsubscribers = new WeakMap<object, () => void>();
 
+// The WeChat `AllProperty` type insists `value` is a real object when `type: Object`.
+// We accept `null` at runtime (the card just renders nothing) — cast through `unknown`
+// to loosen the IDL.
 Component({
   properties: {
     pet: {
       type: Object,
-      value: null as PetDaycare.Pet | null,
+      value: null,
     },
-  },
+  } as unknown as WechatMiniprogram.Component.PropertyOption,
 
   data: {
     speciesLabel: '',

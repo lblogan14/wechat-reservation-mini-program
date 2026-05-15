@@ -88,9 +88,9 @@ Page({
   },
 
   rebuildRows() {
-    const queue: QueueRow[] = this.raw
-      .filter((e) => e.status === 'waiting' || e.status === 'offered')
-      .map((e) => ({
+    const queue: QueueRow[] = (this.raw as EnrichedWaitlistEntry[])
+      .filter((e: EnrichedWaitlistEntry) => e.status === 'waiting' || e.status === 'offered')
+      .map((e: EnrichedWaitlistEntry) => ({
         _id: e._id!,
         serviceName: localized(e.serviceNameZh, e.serviceNameEn),
         dateLabel: fmtTpl(t('bookings_card_dates'), { from: fmtDate(e.dropoffAt), to: fmtDate(e.pickupAt) }),

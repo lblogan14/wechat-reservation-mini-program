@@ -68,12 +68,11 @@ Page({
       wx.showToast({ title: 'Not found', icon: 'error' });
       return;
     }
+    const basisIdx = this.data.basisOptions.findIndex((o: { value: ChargeBasis; label: string }) => o.value === found.chargeBasis);
     this.setData({
       addon: found,
       priceInput: String(found.unitPrice),
-      basisIndex: this.data.basisOptions.findIndex((o) => o.value === found.chargeBasis) >= 0
-        ? this.data.basisOptions.findIndex((o) => o.value === found.chargeBasis)
-        : 0,
+      basisIndex: basisIdx < 0 ? 0 : basisIdx,
       title: t('addon_edit_title_edit'),
     });
   },

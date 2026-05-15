@@ -53,12 +53,15 @@ exports.main = async (event) => {
     .limit(500)
     .get();
 
+  // Sort by `_id` so duplicate absolute overrides on the same (date, serviceId) resolve
+  // deterministically (last-_id wins). availabilityUpsert now enforces uniqueness for absolute
+  // rows on insert, but this defends against legacy data created before that landed.
   const overrideMap = new Map();
-  for (const o of overridesRes.data) {
+  const overridesSorted = overridesRes.data.slice().sort((a, b) => String(a._id).localeCompare(String(b._id)));
+  for (const o of overridesSorted) {
     const key = normalizeDate(o.date);
     const entry = overrideMap.get(key) || { absolute: null, delta: 0 };
     if (typeof o.capacityAbsolute === 'number') {
-      // If multiple absolute overrides exist, the latest one wins (highest _id).
       entry.absolute = o.capacityAbsolute;
     } else if (typeof o.capacityDelta === 'number') {
       entry.delta += o.capacityDelta;

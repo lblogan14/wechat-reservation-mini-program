@@ -121,8 +121,10 @@ exports.main = async (event) => {
     .where({ serviceId: event.serviceId, date: _.gte(rangeFrom).and(_.lte(rangeTo)) })
     .limit(500)
     .get();
+  // Sort by `_id` so duplicate absolute overrides resolve deterministically (last-_id wins).
+  const overridesSorted = overridesRes.data.slice().sort((a, b) => String(a._id).localeCompare(String(b._id)));
   const overrideMap = new Map();
-  for (const o of overridesRes.data) {
+  for (const o of overridesSorted) {
     const k = normalizeDate(o.date);
     const entry = overrideMap.get(k) || { absolute: null, delta: 0 };
     if (typeof o.capacityAbsolute === 'number') entry.absolute = o.capacityAbsolute;
@@ -171,9 +173,19 @@ exports.main = async (event) => {
   // 6. Resolve add-ons (look up active catalog rows and freeze pricing into the booking)
   let resolvedAddOns = [];
   if (Array.isArray(event.addOns) && event.addOns.length) {
-    const requested = event.addOns
-      .filter((a) => a && a.addonId && typeof a.quantity === 'number' && a.quantity > 0)
-      .map((a) => ({ addonId: String(a.addonId), quantity: Math.floor(a.quantity) }));
+    // Coerce, floor, then drop non-positive quantities. Floor-before-filter so a 0.5 doesn't
+    // smuggle through as a 0-quantity ghost row.
+    const sanitised = event.addOns
+      .filter((a) => a && a.addonId && typeof a.quantity === 'number')
+      .map((a) => ({ addonId: String(a.addonId), quantity: Math.floor(a.quantity) }))
+      .filter((a) => a.quantity > 0);
+    // Dedupe duplicate addonIds by summing quantities — the client-side stepper can't produce these
+    // but a hand-crafted payload could.
+    const qtyByAddon = new Map();
+    for (const a of sanitised) {
+      qtyByAddon.set(a.addonId, (qtyByAddon.get(a.addonId) || 0) + a.quantity);
+    }
+    const requested = Array.from(qtyByAddon, ([addonId, quantity]) => ({ addonId, quantity }));
     if (requested.length) {
       const ids = requested.map((a) => a.addonId);
       const aRes = await db.collection('addons').where({ _id: _.in(ids), active: true }).get();

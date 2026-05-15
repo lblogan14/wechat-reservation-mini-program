@@ -16,6 +16,7 @@ function normalizeDate(ts) {
 exports.main = async (event) => {
   const { OPENID } = cloud.getWXContext();
   const db = cloud.database();
+  const _ = db.command;
 
   if (!(await assertOwner(db, OPENID))) {
     return { ok: false, error: 'owner role required' };
@@ -49,12 +50,31 @@ exports.main = async (event) => {
   }
 
   const overrides = db.collection('availabilityOverrides');
+
+  // Enforce one absolute override per (date, serviceId). If the caller is writing an absolute
+  // mode, remove any pre-existing absolute row(s) for the same key first — otherwise capacityRange,
+  // bookingCreate, and waitlistPromote all see a non-deterministic "last one wins" that depends on
+  // arbitrary DB result ordering.
+  if (hasAbsolute) {
+    const dupes = await overrides
+      .where({ date: payload.date, serviceId: payload.serviceId, capacityAbsolute: _.exists(true) })
+      .get();
+    for (const d of dupes.data) {
+      if (event._id && d._id === event._id) continue;
+      await overrides.doc(d._id).remove();
+    }
+  }
+
   if (event._id) {
     const existing = await overrides.doc(event._id).get().catch(() => null);
     if (!existing || !existing.data) {
       return { ok: false, error: 'override not found' };
     }
-    await overrides.doc(event._id).update({ data: payload });
+    // Switching modes: clear the field that no longer applies so the row carries exactly one.
+    const clearField = hasAbsolute ? 'capacityDelta' : 'capacityAbsolute';
+    await overrides.doc(event._id).update({
+      data: { ...payload, [clearField]: _.remove() },
+    });
     return { ok: true, _id: event._id };
   }
 

@@ -122,11 +122,11 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 ## Getting started
 
 1. **Register a WeChat Mini Program AppID** at https://mp.weixin.qq.com (个人小程序 path). Open [project.config.json](project.config.json) and replace `"appid": "touristappid"` with your real AppID. Without a real AppID the simulator works but `wx.cloud` is disabled, so cloud functions and the database can't run.
-2. **Install dev dependencies:** `npm install` at the repo root. This installs `miniprogram-api-typings` (TS types for `wx.*`) and `typescript`. Run `npm run typecheck` to type-check without emitting.
+2. **Install dev dependencies:** `pnpm install` at the repo root (use **pnpm**, not npm — pnpm is the package manager for this project). This installs `miniprogram-api-typings` (TS types for `wx.*`) and `typescript`. Run `pnpm typecheck` to type-check without emitting.
 3. **Open 微信开发者工具** (download: https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html). Import this repo directory; the IDE picks up [project.config.json](project.config.json) automatically and detects the TS source.
 4. **Create a 云开发 environment:** in the IDE, open the 云开发 panel → 新建环境. Copy the env ID into [miniprogram/app.ts](miniprogram/app.ts) at the `// TODO: replace with your 云开发 env ID` comment.
 5. **Create database collections** in the 云开发 console (the SDK does not auto-create them). For v0.13: `users` + `pets` + `daycareConfig` + `services` + `availabilityOverrides` + `bookings` + `waitlistEntries` + `messageThreads` + `messages` + `addons`. All v1 collections are now in place.
-6. **Deploy cloud functions:** for each folder under [cloudfunctions/](cloudfunctions/), right-click in the IDE → *上传并部署：云端安装依赖（不上传 node_modules）*. The IDE handles `npm install` server-side. Current functions: `login`, `userGet`, `userPromote`, `petList`, `petUpsert`, `petDelete`, `daycareGet`, `daycareUpsert`, `serviceList`, `serviceUpsert`, `serviceDelete`, `availabilityList`, `availabilityUpsert`, `availabilityDelete`, `capacityRange`, `bookingCreate`, `bookingList`, `bookingCancel`, `bookingStatusUpdate`, `bookingPaymentUpdate`, `waitlistCreate`, `waitlistList`, `waitlistCancel`, `waitlistPromote`, `messageThreadList`, `messageList`, `messageSend`, `messageMarkRead`, `messageThreadEnsure`, `addonList`, `addonUpsert`, `addonDelete`, `sendReminders`.
+6. **Deploy cloud functions:** for each folder under [cloudfunctions/](cloudfunctions/), right-click in the IDE → *上传并部署：云端安装依赖（不上传 node_modules）*. The IDE handles dependency installation server-side (uses npm internally — cloud functions are deployed as standalone Node bundles, separate from the root `pnpm`-managed dev deps). Current functions: `login`, `userGet`, `userPromote`, `petList`, `petUpsert`, `petDelete`, `daycareGet`, `daycareUpsert`, `serviceList`, `serviceUpsert`, `serviceDelete`, `availabilityList`, `availabilityUpsert`, `availabilityDelete`, `capacityRange`, `bookingCreate`, `bookingList`, `bookingCancel`, `bookingStatusUpdate`, `bookingPaymentUpdate`, `waitlistCreate`, `waitlistList`, `waitlistCancel`, `waitlistPromote`, `messageThreadList`, `messageList`, `messageSend`, `messageMarkRead`, `messageThreadEnsure`, `addonList`, `addonUpsert`, `addonDelete`, `sendReminders`.
    - For `userPromote`, also set a `BOOTSTRAP_OWNER_CODE` environment variable on the cloud function (cloud-function panel → 环境变量). The first parent uses that code in the profile page's "Promote to owner" form to flip their `User.role` to `'owner'`. Without the env var, the function refuses all promotions.
    - For `sendReminders`, deploy normally — the daily timer trigger is declared in its `config.json`. See **v0.13 reminders decisions + setup** above for the 微信公众平台 template setup that's required before reminders actually fire.
 7. **Preview:** click *预览* in the IDE to generate a QR code, scan with WeChat. Or run in the simulator.
@@ -241,8 +241,9 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 
 ## Commands
 
-- `npm install` — install TS + api-typings (root, dev-only).
-- `npm run typecheck` — type-check the Mini Program without emitting (`tsc --noEmit` against [miniprogram/tsconfig.json](miniprogram/tsconfig.json)).
+- **Use `pnpm`, not `npm`, for every package operation in this repo.** A `pnpm-lock.yaml` is the source of truth.
+- `pnpm install` — install TS + api-typings (root, dev-only).
+- `pnpm typecheck` — type-check the Mini Program without emitting (`tsc --noEmit` against [miniprogram/tsconfig.json](miniprogram/tsconfig.json)).
 - No test runner is set up yet — add one (recommendation: Vitest for cloud functions, plus `miniprogram-simulate` for components) when test coverage matters.
 
 ## v1 backlog (priority order)

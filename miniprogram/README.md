@@ -76,11 +76,11 @@ MessageThread { bookingId, parentOpenid, unreadForParent, unreadForOwner }
 
 ## Running locally
 
-From the repo root:
+From the repo root (this repo uses **pnpm**, not npm):
 
 ```bash
-npm install
-npm run typecheck
+pnpm install
+pnpm typecheck
 ```
 
 Then open 微信开发者工具 and point it at this repository root (the IDE auto-detects `project.config.json`). See the root [`README.md`](../README.md) and [`CLAUDE.md`](../CLAUDE.md) for AppID, 云开发 env setup, and the cloud function deployment dance.

@@ -143,7 +143,7 @@ Page({
     const pickups: DashboardRow[] = [];
     const staying: DashboardRow[] = [];
 
-    for (const b of this.raw) {
+    for (const b of this.raw as EnrichedBooking[]) {
       if (b.bookingStatus === 'cancelled' || b.bookingStatus === 'no_show') continue;
       const dropoffDay = startOfDayUTC(b.dropoffAt);
       const pickupDay = startOfDayUTC(b.pickupAt);

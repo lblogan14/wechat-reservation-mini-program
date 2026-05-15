@@ -126,7 +126,7 @@ Page({
 
   rebuildServiceLabels() {
     this.setData({
-      serviceOptions: this.services.map((s) => ({
+      serviceOptions: this.services.map((s: PetDaycare.Service) => ({
         value: s._id!,
         label: localized(s.nameZh, s.nameEn),
       })),

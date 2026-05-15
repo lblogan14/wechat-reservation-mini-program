@@ -65,7 +65,7 @@ Page({
   raw: [] as PetDaycare.Service[],
 
   applyServices() {
-    const services: ServiceRow[] = this.raw.map((s) => ({
+    const services: ServiceRow[] = this.raw.map((s: PetDaycare.Service) => ({
       ...s,
       displayName: localized(s.nameZh, s.nameEn),
       priceLabel: `¥${s.pricePerNight} / 晚`,

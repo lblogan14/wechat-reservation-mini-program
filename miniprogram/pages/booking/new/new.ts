@@ -269,8 +269,8 @@ Page({
   },
 
   rebuildAddons() {
-    const prev = new Map(this.data.addons.map((a) => [a._id, a.quantity]));
-    const rows: AddonRow[] = this.addonsRaw.map((a) => ({
+    const prev = new Map<string, number>(this.data.addons.map((a: AddonRow) => [a._id, a.quantity]));
+    const rows: AddonRow[] = this.addonsRaw.map((a: PetDaycare.AddOn) => ({
       _id: a._id!,
       name: localized(a.nameZh, a.nameEn),
       description: localized(a.descriptionZh, a.descriptionEn),
@@ -284,7 +284,7 @@ Page({
   },
 
   rebuildServiceOptions() {
-    const serviceOptions: ServiceOption[] = this.services.map((s) => ({
+    const serviceOptions: ServiceOption[] = this.services.map((s: PetDaycare.Service) => ({
       value: s._id!,
       label: localized(s.nameZh, s.nameEn),
       pricePerNight: s.pricePerNight,
@@ -302,7 +302,9 @@ Page({
       'recurrence_dow_fri',
       'recurrence_dow_sat',
     ];
-    const prev = new Map(this.data.recurDowChips.map((c) => [c.value, c.selected]));
+    const prev = new Map<number, boolean>(
+      this.data.recurDowChips.map((c: DowChip) => [c.value, c.selected]),
+    );
     const recurDowChips: DowChip[] = labelKeys.map((k, idx) => ({
       value: idx,
       label: t(k),
@@ -350,7 +352,7 @@ Page({
 
   onPetToggle(e: WechatMiniprogram.BaseEvent) {
     const id = (e.currentTarget.dataset as { id: string }).id;
-    const pets = this.data.pets.map((p) => (p._id === id ? { ...p, selected: !p.selected } : p));
+    const pets = this.data.pets.map((p: PetRow) => (p._id === id ? { ...p, selected: !p.selected } : p));
     this.setData({ pets });
     this.recompute();
   },
@@ -380,7 +382,7 @@ Page({
 
   onDowChipTap(e: WechatMiniprogram.BaseEvent) {
     const value = Number((e.currentTarget.dataset as { value: string }).value);
-    const recurDowChips = this.data.recurDowChips.map((c) =>
+    const recurDowChips = this.data.recurDowChips.map((c: DowChip) =>
       c.value === value ? { ...c, selected: !c.selected } : c,
     );
     this.setData({ recurDowChips });
@@ -389,14 +391,14 @@ Page({
 
   onAddonInc(e: WechatMiniprogram.BaseEvent) {
     const id = (e.currentTarget.dataset as { id: string }).id;
-    const addons = this.data.addons.map((a) => (a._id === id ? { ...a, quantity: a.quantity + 1 } : a));
+    const addons = this.data.addons.map((a: AddonRow) => (a._id === id ? { ...a, quantity: a.quantity + 1 } : a));
     this.setData({ addons });
     this.recompute();
   },
 
   onAddonDec(e: WechatMiniprogram.BaseEvent) {
     const id = (e.currentTarget.dataset as { id: string }).id;
-    const addons = this.data.addons.map((a) =>
+    const addons = this.data.addons.map((a: AddonRow) =>
       a._id === id ? { ...a, quantity: Math.max(0, a.quantity - 1) } : a,
     );
     this.setData({ addons });
@@ -409,7 +411,7 @@ Page({
     const dropoffDay = parseDateUTC(dropoffDateStr);
     const pickupDay = parseDateUTC(pickupDateStr);
     const nights = Math.max(0, Math.round((pickupDay - dropoffDay) / DAY_MS));
-    const selectedPets = pets.filter((p) => p.selected).length;
+    const selectedPets = pets.filter((p: PetRow) => p.selected).length;
     const service = serviceOptions[serviceIndex];
     const stayCost = service ? nights * service.pricePerNight * selectedPets : 0;
     let addonsSubtotal = 0;
@@ -445,8 +447,8 @@ Page({
     }
     const startDay = parseDateUTC(dropoffDateStr);
     const endDay = parseDateUTC(recurEndsAtStr);
-    const pattern = recurPatternOptions[recurPatternIndex].value;
-    const dow = recurDowChips.filter((c) => c.selected).map((c) => c.value);
+    const pattern = recurPatternOptions[recurPatternIndex].value as RecurrencePattern;
+    const dow = recurDowChips.filter((c: DowChip) => c.selected).map((c: DowChip) => c.value);
     const n = countOccurrences(pattern, dow, startDay, endDay);
     if (n === 0) {
       this.setData({ recurSummary: t('recurrence_summary_zero'), recurInvalid: true });
@@ -472,7 +474,7 @@ Page({
       return;
     }
 
-    const petIds = pets.filter((p) => p.selected).map((p) => p._id);
+    const petIds = pets.filter((p: PetRow) => p.selected).map((p: PetRow) => p._id);
     if (!petIds.length) {
       wx.showToast({ title: t('booking_validation_pets'), icon: 'none' });
       return;
@@ -495,8 +497,8 @@ Page({
         wx.showToast({ title: t('recurrence_validation_ends_at'), icon: 'none' });
         return;
       }
-      const pattern = recurPatternOptions[recurPatternIndex].value;
-      const dow = recurDowChips.filter((c) => c.selected).map((c) => c.value);
+      const pattern = recurPatternOptions[recurPatternIndex].value as RecurrencePattern;
+      const dow = recurDowChips.filter((c: DowChip) => c.selected).map((c: DowChip) => c.value);
       recurrence = {
         pattern,
         endsAt: parseDateUTC(recurEndsAtStr),
@@ -507,8 +509,8 @@ Page({
     }
 
     const selectedAddOns = addons
-      .filter((a) => a.quantity > 0)
-      .map((a) => ({ addonId: a._id, quantity: a.quantity }));
+      .filter((a: AddonRow) => a.quantity > 0)
+      .map((a: AddonRow) => ({ addonId: a._id, quantity: a.quantity }));
 
     this.setData({ submitting: true });
     const res = await bookingCreate({

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "WeChat Mini Program for pet daycare booking",
+  "packageManager": "pnpm@10.33.0",
   "scripts": {
     "typecheck": "tsc -p miniprogram/tsconfig.json --noEmit"
   },

@@ -149,7 +149,7 @@ Page({
   },
 
   applyBooking() {
-    const b = this.data.booking;
+    const b = this.data.booking as EnrichedBooking | null;
     if (!b) {
       this.setData({ serviceName: '', statusLabel: '', petsStr: '' });
       return;

@@ -9,7 +9,7 @@ The WeChat Cloud Development (云开发) backend. Each subfolder is one cloud fu
 └── config.json       # function-level config (permissions, triggers)
 ```
 
-Every function runs in the Node.js runtime provided by 云开发. The 云开发 IDE handles `npm install` server-side on deploy ("上传并部署：云端安装依赖（不上传 node_modules）"). The matching frontend wrappers live in [`../miniprogram/services/`](../miniprogram/services/).
+Every function runs in the Node.js runtime provided by 云开发. The 云开发 IDE installs dependencies server-side on deploy via *上传并部署：云端安装依赖（不上传 node_modules）* — it uses npm internally regardless of what the root project uses (the root uses **pnpm**; the cloud functions are standalone bundles with their own `package.json` and don't share the workspace). The matching frontend wrappers live in [`../miniprogram/services/`](../miniprogram/services/).
 
 ## Function inventory (33 functions)
 
@@ -145,7 +145,7 @@ Several list endpoints (`bookingList`, `waitlistList`, `messageThreadList`) join
 Each function deploys independently from the 微信开发者工具 IDE:
 
 1. Right-click the function folder → *上传并部署：云端安装依赖（不上传 node_modules）*.
-2. The IDE handles `npm install` server-side. Local `node_modules/` is not uploaded.
+2. The IDE handles dependency installation server-side (npm under the hood — cloud functions are not part of the root pnpm workspace). Local `node_modules/` is not uploaded.
 3. For functions with env vars (`userPromote` → `BOOTSTRAP_OWNER_CODE`), set them in 云开发 → 云函数 → 配置 → 环境变量.
 4. For `sendReminders`, the daily timer trigger is declared in [`sendReminders/config.json`](sendReminders/config.json) — no extra setup beyond deploying. The subscribe-message template IDs must be set on `daycareConfig` from the daycare edit page before reminders actually fire.
 

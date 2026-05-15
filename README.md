@@ -92,12 +92,14 @@ At https://mp.weixin.qq.com (individual developer / 个人小程序 path). Open 
 
 ### 2. Install dev dependencies
 
+This repo uses **pnpm**, not npm. If you don't have it: `npm install -g pnpm` (once), then:
+
 ```bash
-npm install
-npm run typecheck
+pnpm install
+pnpm typecheck
 ```
 
-This installs `miniprogram-api-typings` (TS types for `wx.*`) and `typescript`. `npm run typecheck` runs `tsc --noEmit` against [`miniprogram/tsconfig.json`](miniprogram/tsconfig.json).
+`pnpm install` installs `miniprogram-api-typings` (TS types for `wx.*`) and `typescript`. `pnpm typecheck` runs `tsc --noEmit` against [`miniprogram/tsconfig.json`](miniprogram/tsconfig.json).
 
 ### 3. Open 微信开发者工具
 
@@ -132,12 +134,12 @@ Click *预览* in the IDE to generate a QR code; scan with WeChat. Or run in the
 # Once
 git clone <this-repo>
 cd wechat-reservation-mini-program
-npm install
+pnpm install
 # Edit project.config.json — replace appid
 # Edit miniprogram/app.ts — paste your 云开发 env ID
 
 # Each session
-npm run typecheck       # type-check the Mini Program
+pnpm typecheck          # type-check the Mini Program
 # Open 微信开发者工具 → import this directory → 预览 / 真机调试
 ```
 
@@ -145,8 +147,10 @@ npm run typecheck       # type-check the Mini Program
 
 ## Commands
 
-- `npm install` — install TS + api-typings (root, dev-only).
-- `npm run typecheck` — type-check the Mini Program without emitting (`tsc --noEmit`).
+This repo uses **pnpm**. The `pnpm-lock.yaml` is the source of truth — do not mix in `npm install` or `yarn`.
+
+- `pnpm install` — install TS + api-typings (root, dev-only).
+- `pnpm typecheck` — type-check the Mini Program without emitting (`tsc --noEmit`).
 - No test runner is set up yet. Recommendation when test coverage matters: Vitest for cloud functions + `miniprogram-simulate` for components.
 
 ---

@@ -61,7 +61,7 @@ Page({
   },
 
   applyAddons() {
-    const rows: AddonRow[] = this.raw.map((a) => ({
+    const rows: AddonRow[] = this.raw.map((a: PetDaycare.AddOn) => ({
       ...a,
       displayName: localized(a.nameZh, a.nameEn),
       priceLabel: `¥${a.unitPrice}`,

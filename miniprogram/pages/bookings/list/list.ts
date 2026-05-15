@@ -125,7 +125,7 @@ Page({
     const cancelled: BookingRow[] = [];
 
     // Show child instances of a recurring series alongside the parent — useful for review.
-    for (const b of this.rawBookings) {
+    for (const b of this.rawBookings as EnrichedBooking[]) {
       const row: BookingRow = {
         _id: b._id!,
         serviceName: localized(b.serviceNameZh, b.serviceNameEn),
@@ -145,9 +145,9 @@ Page({
       }
     }
 
-    const waitlist: WaitlistRow[] = this.rawWaitlist
-      .filter((e) => e.status === 'waiting' || e.status === 'offered')
-      .map((e) => ({
+    const waitlist: WaitlistRow[] = (this.rawWaitlist as EnrichedWaitlistEntry[])
+      .filter((e: EnrichedWaitlistEntry) => e.status === 'waiting' || e.status === 'offered')
+      .map((e: EnrichedWaitlistEntry) => ({
         _id: e._id!,
         serviceName: localized(e.serviceNameZh, e.serviceNameEn),
         dateLabel: fmtTpl(t('bookings_card_dates'), { from: fmtDate(e.dropoffAt), to: fmtDate(e.pickupAt) }),
