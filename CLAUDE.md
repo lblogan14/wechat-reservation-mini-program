@@ -4,18 +4,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-v0.5 landed on 2026-05-14 (parent-facing availability calendar). The repo now provides:
+v0.6 landed on 2026-05-14 (booking creation flow). The repo now provides:
 
 - Project shell + bilingual zh/en i18n + locale-reactive tab bar
 - Sign-in flow (openid via `wx.cloud.callFunction('login')`, persisted in `wx.storage`); user record (with `role`) cached in `App.globalData.user`
 - Pet profile CRUD: list page (tab) + edit page with full schema (photo, vaccine cert + expiry, breed/sex/neutered/birthdate/weight, feeding/behavior/medical notes, emergency contact)
 - Daycare identity: read-only card on home tab + owner-only edit page (`pages/daycare/edit/`). Owner bootstrap via `userPromote` cloud function (env-var-gated code).
 - Owner services + availability (v0.4): `services` collection (owner-defined rooms/tiers with `pricePerNight`, `capacityPerDay`, `active`); `availabilityOverrides` collection (per-date×serviceId delta-or-absolute capacity tweaks for block-outs / holiday surges); owner-only list + edit pages under `pages/services/` and `pages/availability/`.
-- **Availability calendar** (v0.5): parent-facing monthly grid at `pages/calendar/` reachable from the home tab Book CTA. Service picker + month nav; each cell shows remaining slots with a traffic-light fill (green = open, yellow = limited, red = full, grey = out-of-month). One cloud function `capacityRange` joins `services` + `availabilityOverrides` + `bookings` server-side; the page renders a 6×7 grid (so the leading/trailing days of adjacent months are shown muted). Tapping a cell shows a toast for now — the booking flow lands in v0.6 and will reuse the same `capacityRange` payload.
+- Availability calendar (v0.5): parent-facing monthly grid at `pages/calendar/` reachable from the home tab Book CTA. Service picker + month nav; each cell shows remaining slots with a traffic-light fill (green = open, yellow = limited, red = full, grey = out-of-month). One cloud function `capacityRange` joins `services` + `availabilityOverrides` + `bookings` server-side; the page renders a 6×7 grid. Tapping a cell now navigates to the booking flow with the service + date prefilled.
+- **Booking creation flow** (v0.6): single-page form at `pages/booking/new/` (service picker → drop-off/pick-up date+hour pickers → pet multi-select → optional notes → waiver e-sign → summary → submit). Server-side `bookingCreate` validates pets are caller-owned, service is active, capacity is sufficient for each day in `[dropoffDay, pickupDay)`, then inserts into `bookings` with `bookingStatus: 'confirmed'`. Companion `bookingList` returns the caller's bookings (or all, if owner passes `scope:'all'`).
 - Three tabs: 首页 / 我的宠物 / 我的, all bilingual-aware
-- Fifteen cloud functions: `login`, `userGet`, `userPromote`, `petList`, `petUpsert`, `petDelete`, `daycareGet`, `daycareUpsert`, `serviceList`, `serviceUpsert`, `serviceDelete`, `availabilityList`, `availabilityUpsert`, `availabilityDelete`, `capacityRange`
+- Seventeen cloud functions: `login`, `userGet`, `userPromote`, `petList`, `petUpsert`, `petDelete`, `daycareGet`, `daycareUpsert`, `serviceList`, `serviceUpsert`, `serviceDelete`, `availabilityList`, `availabilityUpsert`, `availabilityDelete`, `capacityRange`, `bookingCreate`, `bookingList`
 
-Not yet implemented: booking creation flow, my-bookings, owner dashboard, messaging, subscribe-message reminders. See **v1 backlog**.
+Not yet implemented: my-bookings UI, recurring bookings (#6), waitlist (#7), owner dashboard, messaging, add-ons UI, subscribe-message reminders. See **v1 backlog**.
+
+## v0.6 decisions doc
+
+Reasonable defaults baked into the booking flow — flag any that need changing:
+
+- **Auto-confirm** on submit when capacity exists; no manual owner approval gate. Owner cancels via the (not-yet-built) dashboard if needed.
+- **Slot accounting**: half-open `[dropoffDay, pickupDay)`. Drop off 6pm Wed → pick up 9am Thu = 1 night, consumes 1 slot on Wed only. Drop off Wed → pick up Fri = 2 nights, consumes 1 slot on Wed and 1 on Thu.
+- **Pets per booking**: any pet may join any service tier; N pets = N slots that day. Multi-pet sibling discount is v2.
+- **Waiver UX**: a checkbox once the user has read the agreement. Scroll-to-bottom enforcement deferred to v2.
+- **Time pickers**: `mode="time"` with hour granularity, no constraint to daycare hours. If the chosen times fall outside `daycareConfig.hoursOpen`–`hoursClose`, the form shows a warning ("owner will verify at drop-off") but does not block submission.
+- **Race condition**: `bookingCreate` reads bookings → checks capacity → inserts; no transaction. If two parents simultaneously book the last slot, one returns `ok:false, error:'insufficient capacity'`. Owner can resolve duplicates via dashboard. Revisit if volume warrants a transaction.
+- **Missing agreement**: if the owner hasn't set up `agreementZh`/`agreementEn`, the waiver section shows a note and submission stores `agreementVersion: 'no-agreement-v0'` so we can later identify pre-waiver bookings.
+- **Add-ons UI** is deferred to backlog #11 (the `BookingAddOn`/`AddOn` schema stubs are in place).
 
 ## Product goal
 
@@ -35,8 +49,8 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 2. **Install dev dependencies:** `npm install` at the repo root. This installs `miniprogram-api-typings` (TS types for `wx.*`) and `typescript`. Run `npm run typecheck` to type-check without emitting.
 3. **Open 微信开发者工具** (download: https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html). Import this repo directory; the IDE picks up [project.config.json](project.config.json) automatically and detects the TS source.
 4. **Create a 云开发 environment:** in the IDE, open the 云开发 panel → 新建环境. Copy the env ID into [miniprogram/app.ts](miniprogram/app.ts) at the `// TODO: replace with your 云开发 env ID` comment.
-5. **Create database collections** in the 云开发 console (the SDK does not auto-create them). For v0.5: `users` + `pets` + `daycareConfig` + `services` + `availabilityOverrides`. The `bookings` collection isn't required yet — `capacityRange` tolerates its absence (treats booked count as 0). Future milestones will add `bookings`, `messageThreads` + `messages`, `addons`, `waitlistEntries`.
-6. **Deploy cloud functions:** for each folder under [cloudfunctions/](cloudfunctions/), right-click in the IDE → *上传并部署：云端安装依赖（不上传 node_modules）*. The IDE handles `npm install` server-side. Current functions: `login`, `userGet`, `userPromote`, `petList`, `petUpsert`, `petDelete`, `daycareGet`, `daycareUpsert`, `serviceList`, `serviceUpsert`, `serviceDelete`, `availabilityList`, `availabilityUpsert`, `availabilityDelete`, `capacityRange`.
+5. **Create database collections** in the 云开发 console (the SDK does not auto-create them). For v0.6: `users` + `pets` + `daycareConfig` + `services` + `availabilityOverrides` + `bookings`. Future milestones will add `messageThreads` + `messages`, `addons`, `waitlistEntries`.
+6. **Deploy cloud functions:** for each folder under [cloudfunctions/](cloudfunctions/), right-click in the IDE → *上传并部署：云端安装依赖（不上传 node_modules）*. The IDE handles `npm install` server-side. Current functions: `login`, `userGet`, `userPromote`, `petList`, `petUpsert`, `petDelete`, `daycareGet`, `daycareUpsert`, `serviceList`, `serviceUpsert`, `serviceDelete`, `availabilityList`, `availabilityUpsert`, `availabilityDelete`, `capacityRange`, `bookingCreate`, `bookingList`.
    - For `userPromote`, also set a `BOOTSTRAP_OWNER_CODE` environment variable on the cloud function (cloud-function panel → 环境变量). The first parent uses that code in the profile page's "Promote to owner" form to flip their `User.role` to `'owner'`. Without the env var, the function refuses all promotions.
 7. **Preview:** click *预览* in the IDE to generate a QR code, scan with WeChat. Or run in the simulator.
 
@@ -59,6 +73,7 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 │   │   ├── availability/list/         # subpage: owner-only block-out + override list
 │   │   ├── availability/edit/         # subpage: owner-only override form
 │   │   ├── calendar/                  # subpage: parent-facing month grid + service picker
+│   │   ├── booking/new/               # subpage: parent booking form (dates + pets + waiver)
 │   │   └── profile/                   # "me" tab — sign-in + owner tools + language switcher
 │   ├── components/
 │   │   ├── lang-switcher/             # zh/en toggle
@@ -72,7 +87,8 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 │   │   ├── daycare.ts                 # daycareGet / daycareUpsert
 │   │   ├── service.ts                 # serviceList / serviceUpsert / serviceDelete
 │   │   ├── availability.ts            # availabilityList / availabilityUpsert / availabilityDelete
-│   │   └── capacity.ts                # capacityRange — per-day remaining slots for a service
+│   │   ├── capacity.ts                # capacityRange — per-day remaining slots for a service
+│   │   └── booking.ts                 # bookingCreate / bookingList
 │   ├── i18n/
 │   │   ├── index.ts                   # locale store + t()
 │   │   ├── zh.ts                      # source-of-truth dictionary (other locales conform to its shape)
@@ -94,7 +110,9 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 │   ├── availabilityList/              # list capacity overrides, optional date-range + serviceId filter
 │   ├── availabilityUpsert/            # upsert override (date+serviceId+delta-or-absolute) — owner only
 │   ├── availabilityDelete/            # delete override — owner only
-│   └── capacityRange/                 # join services + overrides + bookings; return per-day remaining for a date window
+│   ├── capacityRange/                 # join services + overrides + bookings; return per-day remaining for a date window
+│   ├── bookingCreate/                 # validate pets+capacity, insert booking with status 'confirmed'
+│   └── bookingList/                   # list caller's bookings (or scope:'all' for owner)
 ├── project.config.json                # IDE-level config (AppID goes here)
 ├── sitemap.json
 └── package.json                       # dev-only: api-typings + typescript
@@ -128,8 +146,8 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 1. ~~Pet profile CRUD~~ — landed in v0.2.
 2. ~~Daycare home identity page~~ — landed in v0.3 (single hero photo for now; multi-photo carousel deferred to v2 polish).
 3. ~~Owner service/availability editor~~ — landed in v0.4. `services` + `availabilityOverrides` collections; owner-only list + edit pages reachable from the profile tab's owner-tools section.
-4. ~~Calendar view with per-service daily capacity counter~~ — landed in v0.5. `capacityRange` cloud function + `pages/calendar/`. Booking flow (#5) will wire cell taps into the date-range picker.
-5. **Booking creation flow** — date-range picker with hour-granularity drop-off/pick-up times, pet multi-select, service picker (rows from `services`), optional add-ons (rows from `addons`), waiver e-sign capturing `agreementAcceptedAt` + `agreementVersion`, confirmation screen showing cancel/refund policy and 寄养协议.
+4. ~~Calendar view with per-service daily capacity counter~~ — landed in v0.5. `capacityRange` cloud function + `pages/calendar/`. Booking flow (#5) wires cell taps into the date-range picker.
+5. ~~Booking creation flow~~ — landed in v0.6. `pages/booking/new/` + `bookingCreate` + `bookingList`. See "v0.6 decisions doc" above for the defaults baked in (auto-confirm, half-open slot accounting, no-transaction race window, etc.). Add-ons UI deferred to #11.
 6. **Recurring bookings** — `Booking.recurrence` describes the template; per-instance bookings carry `parentBookingId`. Generation happens server-side on confirm.
 7. **Waitlist** — `waitlistEntries` collection. When a parent's desired service+date range is over capacity, offer to join the waitlist; owner can promote an entry into a real booking when capacity opens.
 8. **My bookings (pet parent)** — list + detail + cancel (respecting cancel policy from `daycareConfig`).

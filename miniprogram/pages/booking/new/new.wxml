@@ -1,0 +1,106 @@
+<view class="container">
+  <view class="header"><text class="title">{{titleText}}</text></view>
+
+  <block wx:if="{{notSignedIn}}">
+    <view class="card empty">
+      <text class="muted">{{loginRequiredText}}</text>
+      <button class="primary" bindtap="goSignIn">{{loginCta}}</button>
+    </view>
+  </block>
+
+  <block wx:elif="{{!serviceOptions.length}}">
+    <view class="card empty"><text class="muted">{{fieldNoServices}}</text></view>
+  </block>
+
+  <block wx:elif="{{!pets.length}}">
+    <view class="card empty"><text class="muted">{{fieldNoPets}}</text></view>
+  </block>
+
+  <block wx:else>
+    <view class="card">
+      <text class="section-title">{{sectionService}}</text>
+      <picker class="picker" range="{{serviceOptions}}" range-key="label" value="{{serviceIndex}}" bindchange="onServiceChange">
+        <view class="picker-value">{{serviceOptions[serviceIndex].label}}</view>
+      </picker>
+    </view>
+
+    <view class="card">
+      <text class="section-title">{{sectionDates}}</text>
+      <view class="row">
+        <text class="label">{{fieldDropoffDate}}</text>
+        <picker class="picker" mode="date" value="{{dropoffDateStr}}" bindchange="onDropoffDateChange">
+          <view class="picker-value">{{dropoffDateStr}}</view>
+        </picker>
+      </view>
+      <view class="row">
+        <text class="label">{{fieldDropoffTime}}</text>
+        <picker class="picker" mode="time" value="{{dropoffTimeStr}}" bindchange="onDropoffTimeChange">
+          <view class="picker-value">{{dropoffTimeStr}}</view>
+        </picker>
+      </view>
+      <view class="row">
+        <text class="label">{{fieldPickupDate}}</text>
+        <picker class="picker" mode="date" value="{{pickupDateStr}}" bindchange="onPickupDateChange">
+          <view class="picker-value">{{pickupDateStr}}</view>
+        </picker>
+      </view>
+      <view class="row">
+        <text class="label">{{fieldPickupTime}}</text>
+        <picker class="picker" mode="time" value="{{pickupTimeStr}}" bindchange="onPickupTimeChange">
+          <view class="picker-value">{{pickupTimeStr}}</view>
+        </picker>
+      </view>
+      <view wx:if="{{fieldHoursHint}}" class="hint">{{fieldHoursHint}}</view>
+      <view wx:if="{{showHoursWarning}}" class="warning">{{warningHours}}</view>
+    </view>
+
+    <view class="card">
+      <text class="section-title">{{sectionPets}}</text>
+      <view
+        wx:for="{{pets}}"
+        wx:key="_id"
+        class="pet-row {{item.selected ? 'selected' : ''}}"
+        data-id="{{item._id}}"
+        bindtap="onPetToggle"
+      >
+        <view class="pet-info">
+          <text class="pet-name">{{item.name}}</text>
+          <text class="pet-meta">{{item.speciesLabel}}</text>
+        </view>
+        <view class="check {{item.selected ? 'on' : ''}}">{{item.selected ? '✓' : ''}}</view>
+      </view>
+    </view>
+
+    <view class="card">
+      <text class="section-title">{{sectionNotes}}</text>
+      <textarea class="textarea" value="{{parentNotes}}" bindinput="onNotesInput" placeholder="{{fieldNotesPh}}" />
+    </view>
+
+    <view class="card">
+      <text class="section-title">{{sectionWaiver}}</text>
+      <block wx:if="{{hasAgreement}}">
+        <scroll-view scroll-y class="agreement">
+          <text>{{agreementText}}</text>
+        </scroll-view>
+        <view class="row">
+          <text class="label flex">{{fieldWaiverAgree}}</text>
+          <switch checked="{{agreed}}" bindchange="onAgreedChange" />
+        </view>
+      </block>
+      <block wx:else>
+        <text class="muted">{{fieldWaiverEmpty}}</text>
+      </block>
+    </view>
+
+    <view class="card summary">
+      <text class="section-title">{{sectionSummary}}</text>
+      <view class="row"><text class="label flex">{{totalNightsLabel}}</text><text>{{nights}} {{nightsUnit}}</text></view>
+      <view class="row"><text class="label flex">{{totalPetsLabel}}</text><text>{{selectedPets}} {{petsUnit}}</text></view>
+      <view class="row total"><text class="label flex">{{totalPriceLabel}}</text><text class="price">{{priceUnit}}{{totalPrice}}</text></view>
+    </view>
+
+    <view class="actions">
+      <button class="primary" bindtap="onSubmit" disabled="{{submitting}}">{{submitting ? submittingLabel : submitLabel}}</button>
+    </view>
+  </block>
+</view>

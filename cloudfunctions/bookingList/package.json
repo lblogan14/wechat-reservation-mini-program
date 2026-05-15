@@ -1,0 +1,9 @@
+{
+  "name": "bookingList",
+  "version": "1.0.0",
+  "description": "List bookings. Parents see their own; owners may pass { scope: 'all' } to see all.",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.0"
+  }
+}

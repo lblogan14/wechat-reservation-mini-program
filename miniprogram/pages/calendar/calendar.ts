@@ -219,9 +219,8 @@ Page({
   onCellTap(e: WechatMiniprogram.BaseEvent) {
     const { key, inMonth } = e.currentTarget.dataset as { key: string; inMonth: string };
     if (inMonth !== 'true') return;
-    // Booking flow lands in v0.6 — for now surface a toast so the affordance is honest.
-    wx.showToast({ title: this.data.tapHint, icon: 'none' });
-    // key (UTC start-of-day ts as string) will be passed into the booking flow as the starting date.
-    void key;
+    const svc = this.services[this.data.serviceIndex];
+    if (!svc) return;
+    wx.navigateTo({ url: `/pages/booking/new/new?serviceId=${svc._id}&date=${key}` });
   },
 });

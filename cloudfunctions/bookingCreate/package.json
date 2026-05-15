@@ -1,0 +1,9 @@
+{
+  "name": "bookingCreate",
+  "version": "1.0.0",
+  "description": "Validate pets + capacity, then atomically (best-effort) create a booking. Auto-confirms.",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.0"
+  }
+}
