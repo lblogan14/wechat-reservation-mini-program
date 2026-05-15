@@ -4,22 +4,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-v0.9 landed on 2026-05-14 (my-bookings + waitlist). The repo now provides:
+v0.10 landed on 2026-05-14 (owner dashboard). The repo now provides:
 
 - Project shell + bilingual zh/en i18n + locale-reactive tab bar
 - Sign-in flow (openid via `wx.cloud.callFunction('login')`, persisted in `wx.storage`); user record (with `role`) cached in `App.globalData.user`
 - Pet profile CRUD: list page (tab) + edit page with full schema
-- Daycare identity: read-only card on home tab + owner-only edit page. Owner bootstrap via `userPromote` cloud function (env-var-gated code)
-- Owner services + availability (v0.4): `services` collection (owner-defined rooms/tiers) + `availabilityOverrides` (per-date×serviceId delta-or-absolute tweaks)
-- Availability calendar (v0.5): parent-facing monthly grid + traffic-light fill, `capacityRange` cloud function as the single source of truth for per-day remaining capacity. Calendar cell tap navigates to booking flow with service+date prefilled.
-- Booking creation flow (v0.6): single-page form at `pages/booking/new/`; `bookingCreate` validates pets/service/capacity and inserts with `bookingStatus:'confirmed'`. Companion `bookingList`.
-- Recurring bookings (v0.7): optional recurrence card on the booking form. `bookingCreate` accepts `recurrence`, generates all occurrences upfront (cap 60), validates capacity across the series, inserts template + N-1 instances linked by `parentBookingId`.
-- **My bookings** (v0.8): parent-facing `pages/bookings/list/` shows bookings grouped by Upcoming / Past / Cancelled, plus an inline Waitlist section. Tap a booking → `pages/bookings/detail/` with full breakdown + cancel actions. `bookingCancel` cloud function supports single + cancel-series. `bookingList` is now server-enriched with `serviceNameZh/En` + `petNames` so the UI renders without extra round-trips. Home tab "My bookings" CTA wired up.
-- **Waitlist** (v0.9): when a booking attempt fails with `insufficient capacity` and it's not recurring, a modal offers "Join waitlist". Server-side `waitlistCreate` / `waitlistList` / `waitlistCancel` / `waitlistPromote`. Owner sees `pages/waitlist/queue/` from profile owner-tools (waitlist queue with Promote-to-Booking + Cancel actions). `waitlistPromote` re-runs the capacity check and creates the booking, marking the entry `fulfilled`.
+- Daycare identity: read-only card on home tab + owner-only edit page
+- Owner services + availability (v0.4): `services` + `availabilityOverrides`; owner-only list + edit pages
+- Availability calendar (v0.5): parent-facing monthly grid + traffic-light fill, `capacityRange` cloud function as the single source of truth for per-day remaining capacity
+- Booking creation flow (v0.6): single-page form at `pages/booking/new/`; `bookingCreate` validates pets/service/capacity and inserts with `bookingStatus:'confirmed'`
+- Recurring bookings (v0.7): optional recurrence card on the booking form; `bookingCreate` generates all occurrences upfront (cap 60) and links them with `parentBookingId`
+- My bookings (v0.8): parent-facing `pages/bookings/list/` (Upcoming / Past / Cancelled + inline Waitlist) → `pages/bookings/detail/` with cancel single + cancel-series. `bookingList` is server-enriched with `serviceNameZh/En` + `petNames`.
+- Waitlist (v0.9): capacity-blocked single-stay attempts get a "Join waitlist" modal; owner `pages/waitlist/queue/` with Promote-to-Booking + Cancel; `waitlistPromote` re-runs capacity check and creates the booking.
+- **Owner dashboard** (v0.10): `pages/dashboard/` shows today's drop-offs / pick-ups / currently-staying pets with inline action buttons (check-in, check-out, mark no-show). Reachable from profile owner-tools (primary CTA). The shared booking detail page picks up an owner panel (check-in/check-out/no-show buttons + payment status picker + payment note field) when `isOwner()` is true — fetches via `scope:'all'` so the owner can open any booking. Two new cloud functions: `bookingStatusUpdate` (validates allowed transitions: confirmed→checked_in, confirmed→no_show, checked_in→checked_out) and `bookingPaymentUpdate` (paymentStatus + paymentNote, since v1 has no WeChat Pay).
 - Three tabs: 首页 / 我的宠物 / 我的, all bilingual-aware
-- Twenty-two cloud functions: `login`, `userGet`, `userPromote`, `petList`, `petUpsert`, `petDelete`, `daycareGet`, `daycareUpsert`, `serviceList`, `serviceUpsert`, `serviceDelete`, `availabilityList`, `availabilityUpsert`, `availabilityDelete`, `capacityRange`, `bookingCreate`, `bookingList`, `bookingCancel`, `waitlistCreate`, `waitlistList`, `waitlistCancel`, `waitlistPromote`
+- Twenty-four cloud functions (+2 from v0.9): `login`, `userGet`, `userPromote`, `petList`, `petUpsert`, `petDelete`, `daycareGet`, `daycareUpsert`, `serviceList`, `serviceUpsert`, `serviceDelete`, `availabilityList`, `availabilityUpsert`, `availabilityDelete`, `capacityRange`, `bookingCreate`, `bookingList`, `bookingCancel`, `bookingStatusUpdate`, `bookingPaymentUpdate`, `waitlistCreate`, `waitlistList`, `waitlistCancel`, `waitlistPromote`
 
-Not yet implemented: owner dashboard, messaging, add-ons UI, subscribe-message reminders. See **v1 backlog**.
+Not yet implemented: 2-way messaging (#10), add-ons UI (#11), subscribe-message reminders (#12), walk-in manual entry. See **v1 backlog**.
 
 ## v0.6 decisions doc
 
@@ -54,6 +55,18 @@ Reasonable defaults baked into the booking flow — flag any that need changing:
 - **Promotion side-effect**: `waitlistPromote` creates a `bookings` row with `agreementVersion: 'promoted-from-waitlist'` (no waiver acceptance — owner is acting as proxy). If you later want stricter compliance, surface a one-tap waiver to the parent before promotion.
 - **Status pills**: each booking + waitlist status gets a colored chip. Mapping: confirmed=green, checked_in=blue, checked_out=grey, cancelled=red, no_show=yellow, waitlist-waiting=yellow, waitlist-offered=blue.
 
+## v0.10 dashboard decisions
+
+- **Today bucketing** is computed client-side from `bookingList({scope:'all'})` — the returned set is bounded by `bookings` limit 200; fine for single-home scale. Buckets:
+  - **Drop-offs today**: `confirmed` AND `dropoffDay === today` (UTC start-of-day).
+  - **Pick-ups today**: `checked_in` AND `pickupDay === today`.
+  - **Currently staying**: `checked_in` AND `dropoffDay <= today < pickupDay`.
+- **Status transitions enforced server-side** in `bookingStatusUpdate`. Allowed: `confirmed → checked_in`, `confirmed → no_show`, `checked_in → checked_out`. Any other transition errors with `cannot transition X → Y`. Parents go through `bookingCancel`, not this endpoint.
+- **Owner panel on booking detail**: visible only when `isOwner()` returns true (client check) AND uses `scope:'all'` to fetch (server check). Even if a non-owner manages to render the panel, the server-side `bookingStatusUpdate` / `bookingPaymentUpdate` both re-verify owner role.
+- **Payment is manual**: since individual-dev blocks WeChat Pay, `bookingPaymentUpdate` just sets `paymentStatus` + `paymentNote`. The owner records "paid by 支付宝 transfer 5/14" or similar. Surfaces back on the detail page.
+- **Walk-in entry deferred**: the dashboard does NOT yet support the owner creating a booking on behalf of a parent. Workaround in v1: ask the parent to use the app, or insert directly in 云开发 console. Building a real walk-in flow requires letting the owner choose any parent's pets, which is a UX rewrite of the booking form. Revisit if walk-ins become common.
+- **No timezone refinement yet**: dashboard uses UTC start-of-day everywhere. For a 中国 daycare the calendar day matches CST until 16:00 UTC (00:00 CST next day), so the only practical issue would be 4pm–midnight UTC drop-offs on the previous day. Fix later by switching to a fixed +08:00 offset (already flagged in capacity / date math notes).
+
 ## Product goal
 
 A WeChat Mini Program that lets pet owners book appointments at pet daycare homes — view available time slots, select services, and confirm appointments inside the WeChat client. See [README.md](README.md) for the full pitch (bilingual: English + 中文).
@@ -73,7 +86,7 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 3. **Open 微信开发者工具** (download: https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html). Import this repo directory; the IDE picks up [project.config.json](project.config.json) automatically and detects the TS source.
 4. **Create a 云开发 environment:** in the IDE, open the 云开发 panel → 新建环境. Copy the env ID into [miniprogram/app.ts](miniprogram/app.ts) at the `// TODO: replace with your 云开发 env ID` comment.
 5. **Create database collections** in the 云开发 console (the SDK does not auto-create them). For v0.9: `users` + `pets` + `daycareConfig` + `services` + `availabilityOverrides` + `bookings` + `waitlistEntries`. Future milestones will add `messageThreads` + `messages`, `addons`.
-6. **Deploy cloud functions:** for each folder under [cloudfunctions/](cloudfunctions/), right-click in the IDE → *上传并部署：云端安装依赖（不上传 node_modules）*. The IDE handles `npm install` server-side. Current functions: `login`, `userGet`, `userPromote`, `petList`, `petUpsert`, `petDelete`, `daycareGet`, `daycareUpsert`, `serviceList`, `serviceUpsert`, `serviceDelete`, `availabilityList`, `availabilityUpsert`, `availabilityDelete`, `capacityRange`, `bookingCreate`, `bookingList`, `bookingCancel`, `waitlistCreate`, `waitlistList`, `waitlistCancel`, `waitlistPromote`.
+6. **Deploy cloud functions:** for each folder under [cloudfunctions/](cloudfunctions/), right-click in the IDE → *上传并部署：云端安装依赖（不上传 node_modules）*. The IDE handles `npm install` server-side. Current functions: `login`, `userGet`, `userPromote`, `petList`, `petUpsert`, `petDelete`, `daycareGet`, `daycareUpsert`, `serviceList`, `serviceUpsert`, `serviceDelete`, `availabilityList`, `availabilityUpsert`, `availabilityDelete`, `capacityRange`, `bookingCreate`, `bookingList`, `bookingCancel`, `bookingStatusUpdate`, `bookingPaymentUpdate`, `waitlistCreate`, `waitlistList`, `waitlistCancel`, `waitlistPromote`.
    - For `userPromote`, also set a `BOOTSTRAP_OWNER_CODE` environment variable on the cloud function (cloud-function panel → 环境变量). The first parent uses that code in the profile page's "Promote to owner" form to flip their `User.role` to `'owner'`. Without the env var, the function refuses all promotions.
 7. **Preview:** click *预览* in the IDE to generate a QR code, scan with WeChat. Or run in the simulator.
 
@@ -98,8 +111,9 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 │   │   ├── calendar/                  # subpage: parent-facing month grid + service picker
 │   │   ├── booking/new/               # subpage: parent booking form (dates + pets + waiver + recurrence)
 │   │   ├── bookings/list/             # subpage: parent's bookings + inline waitlist entries
-│   │   ├── bookings/detail/           # subpage: single booking detail + cancel / cancel-series
+│   │   ├── bookings/detail/           # subpage: single booking detail + cancel; owner panel for status/payment
 │   │   ├── waitlist/queue/            # subpage: owner-only waitlist queue with promote action
+│   │   ├── dashboard/                 # subpage: owner-only today view (drop-offs / pick-ups / staying)
 │   │   └── profile/                   # "me" tab — sign-in + owner tools + language switcher
 │   ├── components/
 │   │   ├── lang-switcher/             # zh/en toggle
@@ -114,7 +128,7 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 │   │   ├── service.ts                 # serviceList / serviceUpsert / serviceDelete
 │   │   ├── availability.ts            # availabilityList / availabilityUpsert / availabilityDelete
 │   │   ├── capacity.ts                # capacityRange — per-day remaining slots for a service
-│   │   ├── booking.ts                 # bookingCreate / bookingList / bookingCancel
+│   │   ├── booking.ts                 # bookingCreate / bookingList / bookingCancel / bookingStatusUpdate / bookingPaymentUpdate
 │   │   └── waitlist.ts                # waitlistCreate / waitlistList / waitlistCancel / waitlistPromote
 │   ├── i18n/
 │   │   ├── index.ts                   # locale store + t()
@@ -141,6 +155,8 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 │   ├── bookingCreate/                 # validate pets+capacity, insert booking with status 'confirmed'; supports recurrence
 │   ├── bookingList/                   # list caller's bookings (or scope:'all' for owner); server-enriched with serviceName + petNames
 │   ├── bookingCancel/                 # cancel a single confirmed booking or the whole series (cancelSeries:true)
+│   ├── bookingStatusUpdate/           # owner-only: confirmed→checked_in/no_show, checked_in→checked_out
+│   ├── bookingPaymentUpdate/          # owner-only: set paymentStatus + paymentNote (manual since no WeChat Pay)
 │   ├── waitlistCreate/                # insert a waitlist entry for the caller
 │   ├── waitlistList/                  # list caller's waitlist entries (or scope:'all' for owner queue) — enriched
 │   ├── waitlistCancel/                # cancel a waitlist entry (parent own; owner any)
@@ -183,7 +199,7 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 6. ~~Recurring bookings~~ — landed in v0.7. Recurrence card on `pages/booking/new/`; `bookingCreate` generates and inserts the series eagerly with `parentBookingId` linking. Cap of 60 occurrences. See "v0.7 recurrence decisions" above. Cancel-series UI ships with #8.
 7. ~~Waitlist~~ — landed in v0.9. `waitlistEntries` + four cloud functions; capacity-blocked single-stay attempts get a "Join waitlist" modal; owner queue at `pages/waitlist/queue/` with Promote-to-Booking action. Series-waitlisting deferred to v2.
 8. ~~My bookings (pet parent)~~ — landed in v0.8. `pages/bookings/list/` (grouped Upcoming / Past / Cancelled + inline Waitlist) + `pages/bookings/detail/` (cancel single + cancel-series). No cancel-policy lead-time enforcement in v1; the daycare's `cancelPolicyZh/En` is shown for expectations only.
-9. **Owner dashboard** — today's drop-offs/pick-ups, calendar block-out, manual walk-in entry, payment paid/unpaid toggle + note, waitlist queue.
+9. ~~Owner dashboard~~ — landed in v0.10. Today view (`pages/dashboard/`) with inline check-in / check-out / no-show actions; owner panel on the booking detail page handles payment status + note. Walk-in manual entry deferred to v1.x (would require an owner-side variant of the booking form that lets the owner pick any parent's pets). Calendar block-out and waitlist queue already accessible from owner-tools.
 10. **2-way messaging parent ↔ owner** — `messageThreads` + `messages` collections, one thread per booking (or pre-booking inquiry). MVP can poll every 10s when the thread is open; upgrade to 云开发 实时数据推送 later. Plumb a red-dot badge on the home + profile tabs.
 11. **Service add-ons catalog** — `addons` collection (grooming, extra walks, medication admin). Embedded into `Booking.addOns` at booking time so historical pricing is preserved.
 12. **Subscribe-message reminders** — 24h before drop-off, day-of pick-up, payment due. Requires the user to grant `wx.requestSubscribeMessage` permission at booking time.

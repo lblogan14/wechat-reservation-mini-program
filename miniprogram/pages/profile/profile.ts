@@ -18,6 +18,7 @@ Page({
     manageServicesLabel: '',
     manageAvailabilityLabel: '',
     manageWaitlistLabel: '',
+    dashboardLabel: '',
     promoteTitle: '',
     promoteHint: '',
     promoteCodeLabel: '',
@@ -58,6 +59,7 @@ Page({
       manageServicesLabel: t('owner_manage_services'),
       manageAvailabilityLabel: t('owner_manage_availability'),
       manageWaitlistLabel: t('owner_manage_waitlist'),
+      dashboardLabel: t('owner_dashboard'),
       promoteTitle: t('owner_promote_title'),
       promoteHint: t('owner_promote_hint'),
       promoteCodeLabel: t('owner_promote_code'),
@@ -129,5 +131,9 @@ Page({
 
   onManageWaitlistTap() {
     wx.navigateTo({ url: '/pages/waitlist/queue/queue' });
+  },
+
+  onDashboardTap() {
+    wx.navigateTo({ url: '/pages/dashboard/dashboard' });
   },
 });

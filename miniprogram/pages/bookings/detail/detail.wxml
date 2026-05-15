@@ -44,10 +44,31 @@
       </view>
     </view>
 
+    <view wx:if="{{isOwnerView}}" class="card">
+      <text class="owner-title">{{ownerPanelTitle}}</text>
+      <view class="owner-actions">
+        <button wx:if="{{ownerCanCheckin}}" class="primary tiny" bindtap="onOwnerCheckin">{{ownerCheckinLabel}}</button>
+        <button wx:if="{{ownerCanCheckout}}" class="primary tiny" bindtap="onOwnerCheckout">{{ownerCheckoutLabel}}</button>
+        <button wx:if="{{ownerCanNoShow}}" class="ghost tiny" bindtap="onOwnerNoShow">{{ownerNoShowLabel}}</button>
+      </view>
+
+      <view class="row">
+        <text class="label">{{ownerPaymentSection}}</text>
+        <picker class="picker" range="{{ownerPaymentOptions}}" range-key="label" value="{{ownerPaymentIndex}}" bindchange="onPaymentStatusChange">
+          <view class="picker-value">{{ownerPaymentOptions[ownerPaymentIndex].label}}</view>
+        </picker>
+      </view>
+      <view class="row">
+        <text class="label">{{ownerPaymentNoteLabel}}</text>
+        <input class="input" value="{{ownerPaymentNote}}" bindinput="onPaymentNoteInput" placeholder="{{ownerPaymentNotePh}}" />
+      </view>
+      <button class="primary owner-save" bindtap="onSavePayment" disabled="{{ownerSavingPayment}}">{{ownerPaymentSaveLabel}}</button>
+    </view>
+
     <view class="actions">
       <button wx:if="{{canCancelSingle}}" class="danger" bindtap="onCancelTap">{{cancelLabel}}</button>
       <button wx:if="{{canCancelSeries}}" class="danger outline" bindtap="onCancelSeriesTap">{{cancelSeriesLabel}}</button>
-      <view wx:if="{{!canCancelSingle}}" class="hint muted">{{cancelBlockedNote}}</view>
+      <view wx:if="{{!canCancelSingle && !isOwnerView}}" class="hint muted">{{cancelBlockedNote}}</view>
     </view>
   </block>
 </view>

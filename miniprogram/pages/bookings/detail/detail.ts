@@ -1,5 +1,14 @@
 import { t, getLocale, onLocaleChange } from '../../../i18n/index';
-import { bookingList, bookingCancel, type EnrichedBooking } from '../../../services/booking';
+import { isOwner, refreshCurrentUser } from '../../../services/user';
+import { getOpenid } from '../../../services/openid';
+import {
+  bookingList,
+  bookingCancel,
+  bookingStatusUpdate,
+  bookingPaymentUpdate,
+  type EnrichedBooking,
+  type OwnerBookingTransition,
+} from '../../../services/booking';
 
 function localized(zh: string | undefined, en: string | undefined): string {
   const loc = getLocale();
@@ -32,6 +41,8 @@ const PAYMENT_KEY: Record<PetDaycare.PaymentStatus, keyof import('../../../i18n/
   waived: 'booking_detail_payment_waived',
 };
 
+const PAYMENT_VALUES: PetDaycare.PaymentStatus[] = ['pending', 'paid', 'refunded', 'waived'];
+
 Page({
   data: {
     titleText: '',
@@ -51,6 +62,23 @@ Page({
     canCancelSingle: false,
     canCancelSeries: false,
     showRecurringNote: false,
+    // Owner panel
+    isOwnerView: false,
+    ownerPanelTitle: '',
+    ownerCheckinLabel: '',
+    ownerCheckoutLabel: '',
+    ownerNoShowLabel: '',
+    ownerCanCheckin: false,
+    ownerCanCheckout: false,
+    ownerCanNoShow: false,
+    ownerPaymentSection: '',
+    ownerPaymentOptions: [] as Array<{ value: PetDaycare.PaymentStatus; label: string }>,
+    ownerPaymentIndex: 0,
+    ownerPaymentNote: '',
+    ownerPaymentNoteLabel: '',
+    ownerPaymentNotePh: '',
+    ownerPaymentSaveLabel: '',
+    ownerSavingPayment: false,
   },
 
   unsubscribe: undefined as (() => void) | undefined,
@@ -63,6 +91,10 @@ Page({
       this.refreshStrings();
       this.applyBooking();
     });
+
+    if (getOpenid()) await refreshCurrentUser();
+    this.setData({ isOwnerView: isOwner() });
+
     await this.load();
   },
 
@@ -77,6 +109,15 @@ Page({
       cancelSeriesLabel: t('booking_detail_cancel_series'),
       cancelBlockedNote: t('booking_detail_cancel_blocked'),
       recurringNote: t('booking_detail_recurring_label'),
+      ownerPanelTitle: t('owner_panel_title'),
+      ownerCheckinLabel: t('owner_action_checkin'),
+      ownerCheckoutLabel: t('owner_action_checkout'),
+      ownerNoShowLabel: t('owner_action_no_show'),
+      ownerPaymentSection: t('owner_payment_section'),
+      ownerPaymentNoteLabel: t('owner_payment_note_label'),
+      ownerPaymentNotePh: t('owner_payment_note_ph'),
+      ownerPaymentSaveLabel: t('owner_payment_save'),
+      ownerPaymentOptions: PAYMENT_VALUES.map((v) => ({ value: v, label: t(PAYMENT_KEY[v]) })),
       labels: {
         service: t('booking_detail_service'),
         status: t('booking_detail_status'),
@@ -91,7 +132,9 @@ Page({
   },
 
   async load() {
-    const bookings = await bookingList();
+    // Owner can lookup any booking via scope:'all'; parent looks up only their own.
+    const scope = isOwner() ? 'all' : 'mine';
+    const bookings = await bookingList({ scope });
     const found = bookings.find((b) => b._id === this.bookingId) || null;
     this.data.booking = found;
     this.applyBooking();
@@ -104,6 +147,7 @@ Page({
       return;
     }
     const isRecurringMember = !!(b.recurrence || b.parentBookingId);
+    const paymentIndex = Math.max(0, PAYMENT_VALUES.indexOf(b.paymentStatus));
     this.setData({
       booking: b,
       serviceName: localized(b.serviceNameZh, b.serviceNameEn),
@@ -116,6 +160,11 @@ Page({
       showRecurringNote: isRecurringMember,
       canCancelSingle: b.bookingStatus === 'confirmed',
       canCancelSeries: b.bookingStatus === 'confirmed' && isRecurringMember,
+      ownerCanCheckin: b.bookingStatus === 'confirmed',
+      ownerCanCheckout: b.bookingStatus === 'checked_in',
+      ownerCanNoShow: b.bookingStatus === 'confirmed',
+      ownerPaymentIndex: paymentIndex,
+      ownerPaymentNote: b.paymentNote || '',
     });
   },
 
@@ -149,5 +198,58 @@ Page({
     }
     wx.showToast({ title: t('booking_cancelled_toast'), icon: 'success' });
     setTimeout(() => wx.navigateBack(), 600);
+  },
+
+  async ownerTransition(status: OwnerBookingTransition, successKey: keyof import('../../../i18n/zh').Dict) {
+    if (!this.data.booking) return;
+    const res = await bookingStatusUpdate({ _id: this.data.booking._id!, bookingStatus: status });
+    if (!res.ok) {
+      wx.showToast({ title: res.error || t('dashboard_status_update_failed'), icon: 'error' });
+      return;
+    }
+    wx.showToast({ title: t(successKey), icon: 'success' });
+    await this.load();
+  },
+
+  onOwnerCheckin() {
+    this.ownerTransition('checked_in', 'dashboard_checkin_success');
+  },
+
+  onOwnerCheckout() {
+    this.ownerTransition('checked_out', 'dashboard_checkout_success');
+  },
+
+  async onOwnerNoShow() {
+    const confirm = await wx.showModal({
+      title: t('owner_action_no_show'),
+      content: t('dashboard_no_show_confirm'),
+    });
+    if (!confirm.confirm) return;
+    this.ownerTransition('no_show', 'dashboard_no_show_success');
+  },
+
+  onPaymentStatusChange(e: WechatMiniprogram.PickerChange) {
+    this.setData({ ownerPaymentIndex: Number(e.detail.value) });
+  },
+
+  onPaymentNoteInput(e: WechatMiniprogram.Input) {
+    this.setData({ ownerPaymentNote: e.detail.value });
+  },
+
+  async onSavePayment() {
+    if (!this.data.booking || this.data.ownerSavingPayment) return;
+    this.setData({ ownerSavingPayment: true });
+    const res = await bookingPaymentUpdate({
+      _id: this.data.booking._id!,
+      paymentStatus: this.data.ownerPaymentOptions[this.data.ownerPaymentIndex].value,
+      paymentNote: this.data.ownerPaymentNote,
+    });
+    this.setData({ ownerSavingPayment: false });
+    if (!res.ok) {
+      wx.showToast({ title: res.error || t('owner_payment_save_failed'), icon: 'error' });
+      return;
+    }
+    wx.showToast({ title: t('owner_payment_save_success'), icon: 'success' });
+    await this.load();
   },
 });

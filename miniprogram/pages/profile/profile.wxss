@@ -61,6 +61,10 @@
   color: #ffffff;
 }
 
+.primary.stack {
+  margin-bottom: 16rpx;
+}
+
 .secondary {
   background-color: #ffffff;
   color: #0d6efd;

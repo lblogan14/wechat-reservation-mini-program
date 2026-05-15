@@ -1,0 +1,61 @@
+<view class="container">
+  <view class="header"><text class="title">{{titleText}}</text></view>
+
+  <block wx:if="{{notOwner}}">
+    <view class="empty"><text class="muted">{{notOwnerText}}</text></view>
+  </block>
+
+  <block wx:else>
+    <text class="section-header">{{sectionDropoffs}}</text>
+    <block wx:if="{{!dropoffs.length}}">
+      <view class="empty"><text class="muted">{{emptyDropoffs}}</text></view>
+    </block>
+    <view wx:else wx:for="{{dropoffs}}" wx:key="_id" class="row">
+      <view class="row-head">
+        <text class="time">{{item.dropoffStr}}</text>
+        <text class="service">{{item.serviceName}}</text>
+        <text class="chip {{item.statusClass}}">{{item.statusLabel}}</text>
+      </view>
+      <text class="meta">{{item.petsLabel}}</text>
+      <view class="row-actions">
+        <button wx:if="{{item.canCheckin}}" class="primary tiny" data-id="{{item._id}}" bindtap="onCheckin">{{checkinLabel}}</button>
+        <button wx:if="{{item.canNoShow}}" class="ghost tiny" data-id="{{item._id}}" bindtap="onNoShow">{{noShowLabel}}</button>
+        <button class="link tiny" data-id="{{item._id}}" bindtap="onOpenDetail">{{openLabel}}</button>
+      </view>
+    </view>
+
+    <text class="section-header">{{sectionPickups}}</text>
+    <block wx:if="{{!pickups.length}}">
+      <view class="empty"><text class="muted">{{emptyPickups}}</text></view>
+    </block>
+    <view wx:else wx:for="{{pickups}}" wx:key="_id" class="row">
+      <view class="row-head">
+        <text class="time">{{item.pickupStr}}</text>
+        <text class="service">{{item.serviceName}}</text>
+        <text class="chip {{item.statusClass}}">{{item.statusLabel}}</text>
+      </view>
+      <text class="meta">{{item.petsLabel}}</text>
+      <view class="row-actions">
+        <button wx:if="{{item.canCheckout}}" class="primary tiny" data-id="{{item._id}}" bindtap="onCheckout">{{checkoutLabel}}</button>
+        <button class="link tiny" data-id="{{item._id}}" bindtap="onOpenDetail">{{openLabel}}</button>
+      </view>
+    </view>
+
+    <text class="section-header">{{sectionStaying}}</text>
+    <block wx:if="{{!staying.length}}">
+      <view class="empty"><text class="muted">{{emptyStaying}}</text></view>
+    </block>
+    <view wx:else wx:for="{{staying}}" wx:key="_id" class="row">
+      <view class="row-head">
+        <text class="service">{{item.serviceName}}</text>
+        <text class="chip {{item.statusClass}}">{{item.statusLabel}}</text>
+      </view>
+      <text class="meta">{{item.petsLabel}}</text>
+      <text class="meta muted small">→ {{item.pickupStr}}</text>
+      <view class="row-actions">
+        <button wx:if="{{item.canCheckout}}" class="primary tiny" data-id="{{item._id}}" bindtap="onCheckout">{{checkoutLabel}}</button>
+        <button class="link tiny" data-id="{{item._id}}" bindtap="onOpenDetail">{{openLabel}}</button>
+      </view>
+    </view>
+  </block>
+</view>

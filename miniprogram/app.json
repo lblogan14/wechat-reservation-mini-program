@@ -13,7 +13,8 @@
     "pages/booking/new/new",
     "pages/bookings/list/list",
     "pages/bookings/detail/detail",
-    "pages/waitlist/queue/queue"
+    "pages/waitlist/queue/queue",
+    "pages/dashboard/dashboard"
   ],
   "window": {
     "backgroundTextStyle": "light",

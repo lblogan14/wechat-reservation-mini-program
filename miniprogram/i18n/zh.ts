@@ -273,6 +273,36 @@ const zh = {
   waitlist_promote_no_capacity: '该时间段容量依然不足',
 
   cta_my_bookings_open: '查看我的订单',
+
+  owner_dashboard: '主人台账',
+  dashboard_title: '今日台账',
+  dashboard_section_dropoffs: '今天送养',
+  dashboard_section_pickups: '今天接回',
+  dashboard_section_staying: '在店宠物',
+  dashboard_empty_dropoffs: '今天没有送养',
+  dashboard_empty_pickups: '今天没有接回',
+  dashboard_empty_staying: '当前没有在店宠物',
+  dashboard_action_checkin: '办理入住',
+  dashboard_action_checkout: '办理离店',
+  dashboard_action_no_show: '标记未到店',
+  dashboard_action_open: '查看详情',
+  dashboard_checkin_success: '已办理入住',
+  dashboard_checkout_success: '已办理离店',
+  dashboard_no_show_confirm: '确认标记未到店？',
+  dashboard_no_show_success: '已标记未到店',
+  dashboard_status_update_failed: '状态更新失败',
+  dashboard_open_today: '打开今日台账',
+
+  owner_panel_title: '主人操作',
+  owner_action_checkin: '办理入住',
+  owner_action_checkout: '办理离店',
+  owner_action_no_show: '标记未到店',
+  owner_payment_section: '收款状态',
+  owner_payment_note_label: '收款备注',
+  owner_payment_note_ph: '例如：现金 / 转账截图日期',
+  owner_payment_save: '保存收款状态',
+  owner_payment_save_success: '已更新收款状态',
+  owner_payment_save_failed: '收款状态更新失败',
 };
 
 export default zh;

@@ -1,0 +1,91 @@
+.header { padding: 32rpx 0; }
+.title { font-size: 44rpx; font-weight: 600; }
+
+.section-header {
+  display: block;
+  padding: 24rpx 0 12rpx;
+  color: #666;
+  font-size: 24rpx;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.empty {
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  padding: 48rpx 32rpx;
+  text-align: center;
+  margin-bottom: 16rpx;
+}
+
+.muted { color: #888; font-size: 26rpx; }
+.muted.small { font-size: 22rpx; }
+
+.row {
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+}
+
+.row-head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 8rpx;
+}
+
+.time {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #0d6efd;
+  min-width: 130rpx;
+}
+
+.service {
+  flex: 1;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.meta {
+  display: block;
+  color: #444;
+  font-size: 26rpx;
+  margin-top: 4rpx;
+}
+
+.row-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 16rpx;
+  margin-top: 16rpx;
+  flex-wrap: wrap;
+}
+
+.tiny {
+  font-size: 24rpx;
+  padding: 6rpx 20rpx;
+}
+
+.primary { background-color: #0d6efd; color: #ffffff; }
+.ghost { background-color: transparent; color: #dc3545; border: 2rpx solid #dc3545; }
+.link {
+  background-color: transparent;
+  color: #0d6efd;
+  border: none;
+  padding: 6rpx 12rpx;
+}
+.link::after { display: none; }
+
+.chip {
+  font-size: 22rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+}
+
+.chip.confirmed { background-color: #d4edda; color: #155724; }
+.chip.checked_in { background-color: #d1ecf1; color: #0c5460; }
+.chip.checked_out { background-color: #e2e3e5; color: #383d41; }

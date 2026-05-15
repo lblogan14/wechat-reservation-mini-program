@@ -275,6 +275,36 @@ const en: Dict = {
   waitlist_promote_no_capacity: 'Capacity still insufficient',
 
   cta_my_bookings_open: 'View my bookings',
+
+  owner_dashboard: 'Dashboard',
+  dashboard_title: 'Today',
+  dashboard_section_dropoffs: 'Drop-offs today',
+  dashboard_section_pickups: 'Pick-ups today',
+  dashboard_section_staying: 'Currently staying',
+  dashboard_empty_dropoffs: 'No drop-offs today',
+  dashboard_empty_pickups: 'No pick-ups today',
+  dashboard_empty_staying: 'No pets currently staying',
+  dashboard_action_checkin: 'Check in',
+  dashboard_action_checkout: 'Check out',
+  dashboard_action_no_show: 'Mark no-show',
+  dashboard_action_open: 'Open',
+  dashboard_checkin_success: 'Checked in',
+  dashboard_checkout_success: 'Checked out',
+  dashboard_no_show_confirm: 'Mark this booking as no-show?',
+  dashboard_no_show_success: 'Marked no-show',
+  dashboard_status_update_failed: 'Status update failed',
+  dashboard_open_today: 'Open dashboard',
+
+  owner_panel_title: 'Owner actions',
+  owner_action_checkin: 'Check in',
+  owner_action_checkout: 'Check out',
+  owner_action_no_show: 'Mark no-show',
+  owner_payment_section: 'Payment status',
+  owner_payment_note_label: 'Payment note',
+  owner_payment_note_ph: 'e.g. cash, transfer ref, date',
+  owner_payment_save: 'Save payment status',
+  owner_payment_save_success: 'Payment status updated',
+  owner_payment_save_failed: 'Failed to update payment status',
 };
 
 export default en;

@@ -1,0 +1,9 @@
+{
+  "name": "bookingStatusUpdate",
+  "version": "1.0.0",
+  "description": "Owner-only: transition a booking through check-in / check-out / no-show.",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.0"
+  }
+}

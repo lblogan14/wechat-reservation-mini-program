@@ -1,0 +1,9 @@
+{
+  "name": "bookingPaymentUpdate",
+  "version": "1.0.0",
+  "description": "Owner-only: set paymentStatus + paymentNote on a booking.",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.0"
+  }
+}
