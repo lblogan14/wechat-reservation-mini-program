@@ -3,6 +3,7 @@ const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const MAX_OCCURRENCES = 60; // safety cap (≈ 1 year of weekly stays or 2 months of daily)
 
 function normalizeDate(ts) {
   const d = new Date(ts);
@@ -10,6 +11,47 @@ function normalizeDate(ts) {
 }
 
 const ACTIVE_BOOKING_STATUSES = new Set(['confirmed', 'checked_in', 'checked_out']);
+
+function generateOccurrences(dropoffAt, pickupAt, recurrence) {
+  if (!recurrence) {
+    return [{ dropoffAt, pickupAt }];
+  }
+  const { pattern, daysOfWeek, endsAt } = recurrence;
+  if (!endsAt || typeof endsAt !== 'number' || endsAt < dropoffAt) {
+    return null;
+  }
+  if (pattern !== 'daily' && pattern !== 'weekly') {
+    return null;
+  }
+
+  const startDay = normalizeDate(dropoffAt);
+  const endDay = normalizeDate(endsAt);
+  const stayMs = pickupAt - dropoffAt;
+  const dropoffTimeOffset = dropoffAt - startDay;
+  const out = [];
+
+  if (pattern === 'daily') {
+    for (let d = startDay; d <= endDay && out.length < MAX_OCCURRENCES; d += DAY_MS) {
+      out.push({
+        dropoffAt: d + dropoffTimeOffset,
+        pickupAt: d + dropoffTimeOffset + stayMs,
+      });
+    }
+  } else {
+    const daysSet = new Set(
+      Array.isArray(daysOfWeek) && daysOfWeek.length ? daysOfWeek : [new Date(startDay).getUTCDay()],
+    );
+    for (let d = startDay; d <= endDay && out.length < MAX_OCCURRENCES; d += DAY_MS) {
+      if (daysSet.has(new Date(d).getUTCDay())) {
+        out.push({
+          dropoffAt: d + dropoffTimeOffset,
+          pickupAt: d + dropoffTimeOffset + stayMs,
+        });
+      }
+    }
+  }
+  return out;
+}
 
 exports.main = async (event) => {
   const { OPENID } = cloud.getWXContext();
@@ -31,10 +73,15 @@ exports.main = async (event) => {
     return { ok: false, error: 'waiver acceptance required' };
   }
 
+  const occurrences = generateOccurrences(event.dropoffAt, event.pickupAt, event.recurrence);
+  if (!occurrences || !occurrences.length) {
+    return { ok: false, error: 'invalid recurrence' };
+  }
+  if (occurrences.length > MAX_OCCURRENCES) {
+    return { ok: false, error: `recurrence exceeds ${MAX_OCCURRENCES} occurrences` };
+  }
+
   const slots = event.petIds.length;
-  const dropoffDay = normalizeDate(event.dropoffAt);
-  const pickupDay = normalizeDate(event.pickupAt);
-  const nights = Math.max(1, Math.round((pickupDay - dropoffDay) / DAY_MS));
 
   // 2. Pets must belong to caller
   const petsRes = await db.collection('pets')
@@ -52,9 +99,24 @@ exports.main = async (event) => {
   const service = serviceRes.data;
   const base = service.capacityPerDay || 0;
 
-  // 4. Capacity check — for each day in [dropoffDay, pickupDay), remaining >= slots
-  const rangeFrom = dropoffDay;
-  const rangeTo = pickupDay - DAY_MS; // last day consumed
+  // 4. Build a per-day need map across all occurrences
+  let rangeFrom = Infinity;
+  let rangeTo = -Infinity;
+  const needMap = new Map();
+  for (const occ of occurrences) {
+    const occFrom = normalizeDate(occ.dropoffAt);
+    const occTo = normalizeDate(occ.pickupAt) - DAY_MS;
+    if (occTo < occFrom) {
+      return { ok: false, error: 'occurrence pickup must be after dropoff day' };
+    }
+    rangeFrom = Math.min(rangeFrom, occFrom);
+    rangeTo = Math.max(rangeTo, occTo);
+    for (let d = occFrom; d <= occTo; d += DAY_MS) {
+      needMap.set(d, (needMap.get(d) || 0) + slots);
+    }
+  }
+
+  // 5. Capacity check — for each day touched, the day's remaining must cover need
   const overridesRes = await db.collection('availabilityOverrides')
     .where({ serviceId: event.serviceId, date: _.gte(rangeFrom).and(_.lte(rangeTo)) })
     .limit(500)
@@ -91,35 +153,39 @@ exports.main = async (event) => {
     }
   }
 
-  for (let d = rangeFrom; d <= rangeTo; d += DAY_MS) {
-    const ov = overrideMap.get(d) || { absolute: null, delta: 0 };
+  for (const [day, need] of needMap.entries()) {
+    const ov = overrideMap.get(day) || { absolute: null, delta: 0 };
     const dayCap = ov.absolute !== null ? ov.absolute : base + ov.delta;
-    const booked = bookedMap.get(d) || 0;
-    const remaining = dayCap - booked;
-    if (remaining < slots) {
+    const remaining = dayCap - (bookedMap.get(day) || 0);
+    if (remaining < need) {
       return {
         ok: false,
         error: 'insufficient capacity',
-        firstBlockedDate: d,
+        firstBlockedDate: day,
         remaining,
-        requested: slots,
+        requested: need,
       };
     }
   }
 
-  // 5. Insert
+  // 6. Insert template first, then instances pointing at it
   const now = Date.now();
   const pricePerNight = service.pricePerNight || 0;
-  const totalPrice = pricePerNight * nights * slots;
-  const booking = {
+
+  const computeStay = (occ) => {
+    const a = normalizeDate(occ.dropoffAt);
+    const b = normalizeDate(occ.pickupAt);
+    const nights = Math.max(1, Math.round((b - a) / DAY_MS));
+    return { nights, totalPrice: pricePerNight * nights * slots };
+  };
+
+  const template = occurrences[0];
+  const tStay = computeStay(template);
+  const baseFields = {
     parentOpenid: OPENID,
     petIds: event.petIds,
     serviceId: event.serviceId,
-    dropoffAt: event.dropoffAt,
-    pickupAt: event.pickupAt,
-    nights,
     pricePerNight,
-    totalPrice,
     paymentStatus: 'pending',
     bookingStatus: 'confirmed',
     parentNotes: event.parentNotes || '',
@@ -128,6 +194,47 @@ exports.main = async (event) => {
     createdAt: now,
     updatedAt: now,
   };
-  const insert = await db.collection('bookings').add({ data: booking });
-  return { ok: true, _id: insert._id, nights, totalPrice };
+
+  const templateRow = {
+    ...baseFields,
+    dropoffAt: template.dropoffAt,
+    pickupAt: template.pickupAt,
+    nights: tStay.nights,
+    totalPrice: tStay.totalPrice,
+  };
+  if (event.recurrence) {
+    templateRow.recurrence = event.recurrence;
+  }
+
+  const templateInsert = await db.collection('bookings').add({ data: templateRow });
+  const templateId = templateInsert._id;
+  const createdIds = [templateId];
+
+  if (occurrences.length > 1) {
+    // Sequential inserts to keep within transaction-less safety; small N (≤ MAX_OCCURRENCES).
+    for (let i = 1; i < occurrences.length; i += 1) {
+      const occ = occurrences[i];
+      const stay = computeStay(occ);
+      const row = {
+        ...baseFields,
+        dropoffAt: occ.dropoffAt,
+        pickupAt: occ.pickupAt,
+        nights: stay.nights,
+        totalPrice: stay.totalPrice,
+        parentBookingId: templateId,
+      };
+      const insert = await db.collection('bookings').add({ data: row });
+      createdIds.push(insert._id);
+    }
+  }
+
+  const totalPriceSeries = occurrences.reduce((sum, occ) => sum + computeStay(occ).totalPrice, 0);
+  return {
+    ok: true,
+    _id: templateId,
+    instanceIds: createdIds,
+    occurrences: occurrences.length,
+    nights: tStay.nights,
+    totalPrice: totalPriceSeries,
+  };
 };

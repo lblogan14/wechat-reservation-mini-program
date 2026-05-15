@@ -193,6 +193,26 @@ const zh = {
   booking_login_required: '请先登录后再预约',
   booking_required_login_cta: '前往登录',
   cancel: '取消',
+
+  recurrence_section: '重复预约（可选）',
+  recurrence_enable: '设为重复预约',
+  recurrence_pattern: '重复方式',
+  recurrence_pattern_weekly: '每周',
+  recurrence_pattern_daily: '每天',
+  recurrence_days_of_week: '星期几',
+  recurrence_dow_sun: '日',
+  recurrence_dow_mon: '一',
+  recurrence_dow_tue: '二',
+  recurrence_dow_wed: '三',
+  recurrence_dow_thu: '四',
+  recurrence_dow_fri: '五',
+  recurrence_dow_sat: '六',
+  recurrence_ends_at: '重复至',
+  recurrence_summary_count: '将创建 {n} 次预约',
+  recurrence_summary_too_many: '次数超出上限 {max}，请缩短重复期或减少星期数',
+  recurrence_summary_zero: '当前选择不会产生有效预约，请检查日期与星期',
+  recurrence_validation_ends_at: '请选择重复结束日期',
+  recurrence_create_success: '已创建 {n} 次预约',
 };
 
 export default zh;

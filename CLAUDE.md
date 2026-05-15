@@ -4,19 +4,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-v0.6 landed on 2026-05-14 (booking creation flow). The repo now provides:
+v0.7 landed on 2026-05-14 (recurring bookings). The repo now provides:
 
 - Project shell + bilingual zh/en i18n + locale-reactive tab bar
 - Sign-in flow (openid via `wx.cloud.callFunction('login')`, persisted in `wx.storage`); user record (with `role`) cached in `App.globalData.user`
-- Pet profile CRUD: list page (tab) + edit page with full schema (photo, vaccine cert + expiry, breed/sex/neutered/birthdate/weight, feeding/behavior/medical notes, emergency contact)
-- Daycare identity: read-only card on home tab + owner-only edit page (`pages/daycare/edit/`). Owner bootstrap via `userPromote` cloud function (env-var-gated code).
-- Owner services + availability (v0.4): `services` collection (owner-defined rooms/tiers with `pricePerNight`, `capacityPerDay`, `active`); `availabilityOverrides` collection (per-date×serviceId delta-or-absolute capacity tweaks for block-outs / holiday surges); owner-only list + edit pages under `pages/services/` and `pages/availability/`.
-- Availability calendar (v0.5): parent-facing monthly grid at `pages/calendar/` reachable from the home tab Book CTA. Service picker + month nav; each cell shows remaining slots with a traffic-light fill (green = open, yellow = limited, red = full, grey = out-of-month). One cloud function `capacityRange` joins `services` + `availabilityOverrides` + `bookings` server-side; the page renders a 6×7 grid. Tapping a cell now navigates to the booking flow with the service + date prefilled.
-- **Booking creation flow** (v0.6): single-page form at `pages/booking/new/` (service picker → drop-off/pick-up date+hour pickers → pet multi-select → optional notes → waiver e-sign → summary → submit). Server-side `bookingCreate` validates pets are caller-owned, service is active, capacity is sufficient for each day in `[dropoffDay, pickupDay)`, then inserts into `bookings` with `bookingStatus: 'confirmed'`. Companion `bookingList` returns the caller's bookings (or all, if owner passes `scope:'all'`).
+- Pet profile CRUD: list page (tab) + edit page with full schema
+- Daycare identity: read-only card on home tab + owner-only edit page. Owner bootstrap via `userPromote` cloud function (env-var-gated code)
+- Owner services + availability (v0.4): `services` collection (owner-defined rooms/tiers) + `availabilityOverrides` (per-date×serviceId delta-or-absolute tweaks)
+- Availability calendar (v0.5): parent-facing monthly grid + traffic-light fill, `capacityRange` cloud function as the single source of truth for per-day remaining capacity. Calendar cell tap navigates to booking flow with service+date prefilled.
+- Booking creation flow (v0.6): single-page form at `pages/booking/new/`; `bookingCreate` validates pets/service/capacity and inserts with `bookingStatus:'confirmed'`. Companion `bookingList`.
+- **Recurring bookings** (v0.7): optional recurrence card on the booking form (toggle + weekly/daily pattern + days-of-week chips + end date + occurrence count preview). Server-side `bookingCreate` accepts `recurrence: { pattern, daysOfWeek?, endsAt }`, generates all occurrences upfront (capped at 60), validates capacity for every day in every occurrence, then inserts one template booking with `recurrence` populated + N-1 instance bookings carrying `parentBookingId`. Returns `{ instanceIds, occurrences, totalPrice }`.
 - Three tabs: 首页 / 我的宠物 / 我的, all bilingual-aware
-- Seventeen cloud functions: `login`, `userGet`, `userPromote`, `petList`, `petUpsert`, `petDelete`, `daycareGet`, `daycareUpsert`, `serviceList`, `serviceUpsert`, `serviceDelete`, `availabilityList`, `availabilityUpsert`, `availabilityDelete`, `capacityRange`, `bookingCreate`, `bookingList`
+- Seventeen cloud functions (unchanged from v0.6): `login`, `userGet`, `userPromote`, `petList`, `petUpsert`, `petDelete`, `daycareGet`, `daycareUpsert`, `serviceList`, `serviceUpsert`, `serviceDelete`, `availabilityList`, `availabilityUpsert`, `availabilityDelete`, `capacityRange`, `bookingCreate`, `bookingList`
 
-Not yet implemented: my-bookings UI, recurring bookings (#6), waitlist (#7), owner dashboard, messaging, add-ons UI, subscribe-message reminders. See **v1 backlog**.
+Not yet implemented: my-bookings UI (where parents would manage recurring series), waitlist (#7), owner dashboard, messaging, add-ons UI, subscribe-message reminders. See **v1 backlog**.
 
 ## v0.6 decisions doc
 
@@ -30,6 +31,16 @@ Reasonable defaults baked into the booking flow — flag any that need changing:
 - **Race condition**: `bookingCreate` reads bookings → checks capacity → inserts; no transaction. If two parents simultaneously book the last slot, one returns `ok:false, error:'insufficient capacity'`. Owner can resolve duplicates via dashboard. Revisit if volume warrants a transaction.
 - **Missing agreement**: if the owner hasn't set up `agreementZh`/`agreementEn`, the waiver section shows a note and submission stores `agreementVersion: 'no-agreement-v0'` so we can later identify pre-waiver bookings.
 - **Add-ons UI** is deferred to backlog #11 (the `BookingAddOn`/`AddOn` schema stubs are in place).
+
+## v0.7 recurrence decisions
+
+- **Eager generation**: when recurrence is set, all occurrences are computed and inserted at submit time. Each instance is a real `bookings` row with `parentBookingId` pointing at the template (the first occurrence, which carries `recurrence`). No lazy / virtual occurrences. Simpler; easier to cancel a single instance later.
+- **Cap**: `MAX_OCCURRENCES = 60` server-side. Form previews the count and disables submit when over the cap. (≈ 1 year of weekly, 2 months of daily.)
+- **Pattern shapes**: only `'weekly'` (with optional `daysOfWeek`) and `'daily'`. No biweekly / custom intervals in v1.
+- **Day-of-week defaulting**: if pattern is `'weekly'` and no `daysOfWeek` provided, the template dropoff's weekday is used. So picking just "weekly" with no chips works as "every <same weekday>".
+- **Capacity check across the series**: the server builds a `need[date] = sum(slots for every occurrence that consumes that date)` map and validates every day touched by any occurrence against `(base + overrides - existing bookings)`. Overlapping occurrences (e.g., a 3-night stay every Mon AND Wed) naturally double-count and will fail capacity when they should.
+- **Cancellation**: not yet built. When #8 lands, expect two affordances — cancel single instance vs cancel series (walks `parentBookingId`).
+- **Pricing**: each instance carries its own `totalPrice`; the top-level response totals the series so the form can show "createdTotal".
 
 ## Product goal
 
@@ -148,7 +159,7 @@ A WeChat Mini Program that lets pet owners book appointments at pet daycare home
 3. ~~Owner service/availability editor~~ — landed in v0.4. `services` + `availabilityOverrides` collections; owner-only list + edit pages reachable from the profile tab's owner-tools section.
 4. ~~Calendar view with per-service daily capacity counter~~ — landed in v0.5. `capacityRange` cloud function + `pages/calendar/`. Booking flow (#5) wires cell taps into the date-range picker.
 5. ~~Booking creation flow~~ — landed in v0.6. `pages/booking/new/` + `bookingCreate` + `bookingList`. See "v0.6 decisions doc" above for the defaults baked in (auto-confirm, half-open slot accounting, no-transaction race window, etc.). Add-ons UI deferred to #11.
-6. **Recurring bookings** — `Booking.recurrence` describes the template; per-instance bookings carry `parentBookingId`. Generation happens server-side on confirm.
+6. ~~Recurring bookings~~ — landed in v0.7. Recurrence card on `pages/booking/new/`; `bookingCreate` generates and inserts the series eagerly with `parentBookingId` linking. Cap of 60 occurrences. See "v0.7 recurrence decisions" above. Cancel-series UI ships with #8.
 7. **Waitlist** — `waitlistEntries` collection. When a parent's desired service+date range is over capacity, offer to join the waitlist; owner can promote an entry into a real booking when capacity opens.
 8. **My bookings (pet parent)** — list + detail + cancel (respecting cancel policy from `daycareConfig`).
 9. **Owner dashboard** — today's drop-offs/pick-ups, calendar block-out, manual walk-in entry, payment paid/unpaid toggle + note, waitlist queue.

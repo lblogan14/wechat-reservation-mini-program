@@ -195,6 +195,26 @@ const en: Dict = {
   booking_login_required: 'Sign in before booking',
   booking_required_login_cta: 'Go sign in',
   cancel: 'Cancel',
+
+  recurrence_section: 'Recurring booking (optional)',
+  recurrence_enable: 'Make this recurring',
+  recurrence_pattern: 'Repeat',
+  recurrence_pattern_weekly: 'Weekly',
+  recurrence_pattern_daily: 'Daily',
+  recurrence_days_of_week: 'Days of week',
+  recurrence_dow_sun: 'S',
+  recurrence_dow_mon: 'M',
+  recurrence_dow_tue: 'T',
+  recurrence_dow_wed: 'W',
+  recurrence_dow_thu: 'T',
+  recurrence_dow_fri: 'F',
+  recurrence_dow_sat: 'S',
+  recurrence_ends_at: 'Repeat until',
+  recurrence_summary_count: 'Creates {n} bookings',
+  recurrence_summary_too_many: 'Exceeds limit of {max} — shorten the range or pick fewer days',
+  recurrence_summary_zero: 'No valid occurrences with the current selection',
+  recurrence_validation_ends_at: 'Pick an end date for the recurrence',
+  recurrence_create_success: 'Created {n} bookings',
 };
 
 export default en;

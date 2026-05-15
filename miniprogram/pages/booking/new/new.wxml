@@ -72,6 +72,41 @@
     </view>
 
     <view class="card">
+      <text class="section-title">{{sectionRecurrence}}</text>
+      <view class="row">
+        <text class="label flex">{{recurEnableLabel}}</text>
+        <switch checked="{{recurEnabled}}" bindchange="onRecurEnabledChange" />
+      </view>
+      <block wx:if="{{recurEnabled}}">
+        <view class="row">
+          <text class="label">{{recurPatternLabel}}</text>
+          <picker class="picker" range="{{recurPatternOptions}}" range-key="label" value="{{recurPatternIndex}}" bindchange="onRecurPatternChange">
+            <view class="picker-value">{{recurPatternOptions[recurPatternIndex].label}}</view>
+          </picker>
+        </view>
+        <view wx:if="{{recurPatternOptions[recurPatternIndex].value === 'weekly'}}" class="dow-row">
+          <text class="label">{{recurDowLabel}}</text>
+          <view class="dow-chips">
+            <view
+              wx:for="{{recurDowChips}}"
+              wx:key="value"
+              class="dow-chip {{item.selected ? 'on' : ''}}"
+              data-value="{{item.value}}"
+              bindtap="onDowChipTap"
+            >{{item.label}}</view>
+          </view>
+        </view>
+        <view class="row">
+          <text class="label">{{recurEndsAtLabel}}</text>
+          <picker class="picker" mode="date" value="{{recurEndsAtStr}}" bindchange="onRecurEndsAtChange">
+            <view class="picker-value">{{recurEndsAtStr}}</view>
+          </picker>
+        </view>
+        <view wx:if="{{recurSummary}}" class="{{recurInvalid ? 'warning' : 'hint'}}">{{recurSummary}}</view>
+      </block>
+    </view>
+
+    <view class="card">
       <text class="section-title">{{sectionNotes}}</text>
       <textarea class="textarea" value="{{parentNotes}}" bindinput="onNotesInput" placeholder="{{fieldNotesPh}}" />
     </view>

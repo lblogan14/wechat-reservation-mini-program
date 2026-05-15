@@ -8,11 +8,14 @@ export interface BookingCreateArgs {
   parentNotes?: string;
   agreementVersion: string;
   agreementAcceptedAt: number;
+  recurrence?: PetDaycare.BookingRecurrence;
 }
 
 export interface BookingCreateResult {
   ok: boolean;
   _id?: string;
+  instanceIds?: string[];
+  occurrences?: number;
   nights?: number;
   totalPrice?: number;
   error?: string;
